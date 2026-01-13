@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2-Week Expense Tracker</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        #app {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 0.5rem;
+        }
+
+        .period-info {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .welcome-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 1rem;
+        }
+
+        .welcome-text {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .remaining-amount {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .remaining-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .remaining-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2e7d32;
+            transition: color 0.3s ease;
+        }
+
+        .remaining-value.warning {
+            color: #f57c00;
+        }
+
+        .remaining-value.danger {
+            color: #d32f2f;
+        }
+
+        .budget-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            text-align: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.875rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #2e7d32;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1b5e20;
+        }
+
+        .btn-primary:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #2e7d32;
+            border: 2px solid #2e7d32;
+            width: 100%;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f9f4;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #d32f2f;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-danger:hover {
+            background: #ffebee;
+        }
+
+        .expenses-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .expenses-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+
+        .expense-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .expense-info {
+            flex: 1;
+        }
+
+        .expense-note {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .expense-time {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .expense-amount {
+            font-weight: 600;
+            color: #d32f2f;
+            margin-right: 0.5rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+            color: #856404;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .modal-footer button {
+            width: auto;
+        }
+
+        .history-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            padding: 1.5rem;
+            background: white;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .accordion-header:hover {
+            background: #f9f9f9;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 0 1.5rem;
+        }
+
+        .accordion-content.active {
+            max-height: 2000px;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .period-summary {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 0.5rem;
+            align-items: center;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .period-date {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .period-stat {
+            text-align: right;
+        }
+
+        .period-stat-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .history-expense-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .history-expense-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-expenses {
+            padding-left: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .no-expenses {
+            padding: 1rem;
+            text-align: center;
+            color: #999;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 640px) {
+            .remaining-value {
+                font-size: 2.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .budget-stats {
+                gap: 0.75rem;
+            }
+
+            .period-summary {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+            }
+
+            .period-stat {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="app-header">
+            <div class="app-title">2-Week Expense Tracker</div>
+            <div v-if="user" class="period-info" style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+                <span>{{ user.email }}</span>
+                <button @click="signOut" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                    Sign Out
+                </button>
+            </div>
+            <div v-else-if="currentPeriod" class="period-info">
+                {{ formatDateRange(currentPeriod.startISO, currentPeriod.endISO) }}
+            </div>
+            <div v-if="isSyncing" style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">
+                ⟳ Syncing...
+            </div>
+            <div v-if="syncError" style="color: #d32f2f; font-size: 0.75rem; margin-top: 0.5rem;">
+                ⚠ Sync failed: {{ syncError }}
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isLoading" class="card welcome-screen">
+            <div class="welcome-text">Loading...</div>
+        </div>
+
+        <!-- Login Screen -->
+        <div v-if="!user && !isLoading" class="card welcome-screen">
+            <div class="welcome-icon">💰</div>
+            <div class="welcome-title">2-Week Expense Tracker</div>
+            <div class="welcome-text">
+                Sign in to sync your expenses across devices and keep your budget data secure.
+            </div>
+            <button class="btn-primary" @click="signInWithGoogle">
+                Sign in with Google
+            </button>
+        </div>
+
+        <!-- Welcome Screen -->
+        <div v-if="user && !currentPeriod && !isLoading" class="card welcome-screen">
+            <div class="welcome-icon">💰</div>
+            <div class="welcome-title">Start Your First Budget Period</div>
+            <div class="welcome-text">
+                Set a 2-week budget and start tracking your expenses with ease.
+            </div>
+            <div style="max-width: 300px; margin: 0 auto;">
+                <div class="form-group">
+                    <label for="initial-budget">Budget Amount (USD)</label>
+                    <input
+                        type="number"
+                        id="initial-budget"
+                        v-model.number="newBudgetAmount"
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                        max="1000000"
+                        @keyup.enter="createNewPeriod"
+                    />
+                </div>
+                <button
+                    class="btn-primary"
+                    @click="createNewPeriod"
+                    :disabled="!newBudgetAmount || newBudgetAmount <= 0"
+                >
+                    Start Period
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Budget Display -->
+        <div v-if="user && currentPeriod && !isLoading">
+            <div class="card">
+                <div class="remaining-amount">
+                    <div class="remaining-label">Remaining</div>
+                    <div class="remaining-value" :class="remainingColorClass">
+                        {{ formatCurrency(remainingCents) }}
+                    </div>
+                </div>
+                <div class="budget-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Spent</span>
+                        <span class="stat-value">{{ formatCurrency(totalSpentCents) }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Budget</span>
+                        <span class="stat-value">{{ formatCurrency(currentPeriod.budgetCents) }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Days Left</span>
+                        <span class="stat-value">{{ daysLeft }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expense Form -->
+            <div class="card">
+                <div class="form-title">Add Expense</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expense-amount">Amount *</label>
+                        <input
+                            type="number"
+                            id="expense-amount"
+                            v-model.number="newExpenseAmount"
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                            max="1000000"
+                            @keyup.enter="addExpense"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-note">Note</label>
+                        <input
+                            type="text"
+                            id="expense-note"
+                            v-model="newExpenseNote"
+                            placeholder="e.g., groceries"
+                            @keyup.enter="addExpense"
+                        />
+                    </div>
+                </div>
+                <button
+                    class="btn-primary"
+                    @click="addExpense"
+                    :disabled="!newExpenseAmount || newExpenseAmount <= 0"
+                >
+                    Add Expense
+                </button>
+            </div>
+
+            <!-- Period Overdue Warning -->
+            <div v-if="isPeriodOverdue" class="alert">
+                This period ended {{ Math.abs(daysLeft) }} days ago. Consider starting a new period.
+            </div>
+
+            <!-- Expenses List -->
+            <div v-if="currentPeriod.expenses.length > 0" class="card">
+                <div class="expenses-header">
+                    <div class="expenses-title">Recent Expenses</div>
+                    <span style="font-size: 0.875rem; color: #666;">{{ currentPeriod.expenses.length }} item(s)</span>
+                </div>
+                <div
+                    v-for="expense in sortedExpenses"
+                    :key="expense.id"
+                    class="expense-item"
+                >
+                    <div class="expense-info">
+                        <div class="expense-note">{{ expense.note || 'No note' }}</div>
+                        <div class="expense-time">{{ formatTimestamp(expense.tsISO) }}</div>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="expense-amount">{{ formatCurrency(expense.amountCents) }}</div>
+                        <button
+                            class="btn-danger"
+                            @click="deleteExpense(expense.id)"
+                            title="Delete expense"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Period Button -->
+            <button
+                class="btn-secondary"
+                @click="showNewPeriodDialog"
+            >
+                Start New 2-Week Period
+            </button>
+
+            <!-- New Period Modal -->
+            <div class="modal" :class="{ active: newPeriodDialogVisible }">
+                <div class="modal-content">
+                    <div class="modal-header">Start New 2-Week Period</div>
+                    <div class="modal-body">
+                        <p style="color: #666; margin-bottom: 1rem; line-height: 1.6;">
+                            Starting a new period will archive the current period to history. Your current data will be preserved.
+                        </p>
+                        <div class="form-group">
+                            <label for="new-period-budget">New Budget Amount (USD)</label>
+                            <input
+                                type="number"
+                                id="new-period-budget"
+                                v-model.number="newBudgetAmount"
+                                placeholder="0.00"
+                                step="0.01"
+                                min="0"
+                                max="1000000"
+                            />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" @click="newPeriodDialogVisible = false">Cancel</button>
+                        <button
+                            class="btn-primary"
+                            @click="confirmNewPeriod"
+                            :disabled="!newBudgetAmount || newBudgetAmount <= 0"
+                        >
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div v-if="user && history.length > 0" class="history-section">
+            <button class="accordion-header" @click="historyExpanded = !historyExpanded">
+                <span>📜 History ({{ history.length }} period(s))</span>
+                <span>{{ historyExpanded ? '▲' : '▼' }}</span>
+            </button>
+            <div class="accordion-content" :class="{ active: historyExpanded }">
+                <div v-for="period in history" :key="period.id" style="margin-bottom: 1.5rem;">
+                    <div class="period-summary">
+                        <div class="period-date">
+                            {{ formatDateRange(period.startISO, period.endISO) }}
+                        </div>
+                        <div class="period-stat">
+                            <span class="period-stat-label">Budget</span>
+                            {{ formatCurrency(period.budgetCents) }}
+                        </div>
+                        <div class="period-stat">
+                            <span class="period-stat-label">Spent</span>
+                            {{ formatCurrency(period.totalSpentCents) }}
+                        </div>
+                        <div class="period-stat">
+                            <span class="period-stat-label">Remaining</span>
+                            <span :style="{ color: (period.budgetCents - period.totalSpentCents) < 0 ? '#d32f2f' : '#2e7d32' }">
+                                {{ formatCurrency(period.budgetCents - period.totalSpentCents) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div v-if="period.expenses.length > 0" class="history-expenses">
+                        <div
+                            v-for="expense in period.expenses"
+                            :key="expense.id"
+                            class="history-expense-item"
+                        >
+                            <div>
+                                <div style="font-weight: 500;">{{ expense.note || 'No note' }}</div>
+                                <div style="font-size: 0.75rem; color: #999;">{{ formatTimestamp(expense.tsISO) }}</div>
+                            </div>
+                            <div style="font-weight: 600; color: #d32f2f;">{{ formatCurrency(expense.amountCents) }}</div>
+                        </div>
+                    </div>
+                    <div v-else class="no-expenses">
+                        No expenses recorded
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js"></script>
+
+    <script>
+        const { createApp } = Vue;
+
+        // Supabase configuration
+        const SUPABASE_URL = 'https://usilhyecigcpuzsoavtb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzaWxoeWVjaWdjcHV6c29hdnRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNDU5ODMsImV4cCI6MjA4MzkyMTk4M30.OS69oyATVgxLdElzKTLy2ddYo_YdL6qpSt1rBAU553k';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        createApp({
+            data() {
+                return {
+                    currentPeriod: null,
+                    history: [],
+                    lastBudgetCents: null,
+                    newExpenseAmount: null,
+                    newExpenseNote: '',
+                    newBudgetAmount: null,
+                    newPeriodDialogVisible: false,
+                    historyExpanded: false,
+                    user: null,
+                    isLoading: true,
+                    isSyncing: false,
+                    syncError: null
+                };
+            },
+            computed: {
+                totalSpentCents() {
+                    if (!this.currentPeriod) return 0;
+                    return this.currentPeriod.expenses.reduce((sum, exp) => sum + exp.amountCents, 0);
+                },
+                remainingCents() {
+                    if (!this.currentPeriod) return 0;
+                    return this.currentPeriod.budgetCents - this.totalSpentCents;
+                },
+                remainingColorClass() {
+                    if (!this.currentPeriod) return '';
+                    const remaining = this.remainingCents;
+                    const budget = this.currentPeriod.budgetCents;
+
+                    if (remaining < 0) return 'danger';
+                    if (remaining < budget * 0.2) return 'warning';
+                    return '';
+                },
+                daysLeft() {
+                    if (!this.currentPeriod) return 0;
+                    const now = new Date();
+                    const end = new Date(this.currentPeriod.endISO);
+                    const diffMs = end - now;
+                    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                    return diffDays;
+                },
+                isPeriodOverdue() {
+                    if (!this.currentPeriod) return false;
+                    return this.daysLeft < 0;
+                },
+                sortedExpenses() {
+                    if (!this.currentPeriod) return [];
+                    return [...this.currentPeriod.expenses].sort((a, b) =>
+                        new Date(b.tsISO) - new Date(a.tsISO)
+                    );
+                }
+            },
+            methods: {
+                async signInWithGoogle() {
+                    const { error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin
+                        }
+                    });
+                    if (error) {
+                        alert('Error signing in: ' + error.message);
+                    }
+                },
+
+                async signOut() {
+                    const { error } = await supabaseClient.auth.signOut();
+                    if (error) {
+                        alert('Error signing out: ' + error.message);
+                    } else {
+                        this.user = null;
+                        this.currentPeriod = null;
+                        this.history = [];
+                        localStorage.clear();
+                    }
+                },
+
+                async checkAuth() {
+                    this.isLoading = true;
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    this.user = session?.user || null;
+
+                    if (this.user) {
+                        await this.syncFromCloud();
+                    } else {
+                        this.loadData();
+                    }
+
+                    this.isLoading = false;
+                },
+
+                async syncFromCloud() {
+                    try {
+                        this.isSyncing = true;
+                        this.syncError = null;
+
+                        const { data: periods, error } = await supabaseClient
+                            .from('periods')
+                            .select(`
+                                *,
+                                expenses (*)
+                            `)
+                            .order('start_date', { ascending: false });
+
+                        if (error) throw error;
+
+                        const activePeriods = periods.filter(p => !p.closed);
+                        const archivedPeriods = periods.filter(p => p.closed);
+
+                        if (activePeriods.length > 0) {
+                            const period = activePeriods[0];
+                            this.currentPeriod = {
+                                id: period.id,
+                                startISO: period.start_date,
+                                endISO: period.end_date,
+                                budgetCents: period.budget_cents,
+                                closed: period.closed,
+                                expenses: period.expenses.map(e => ({
+                                    id: e.id,
+                                    tsISO: e.timestamp,
+                                    amountCents: e.amount_cents,
+                                    note: e.note || ''
+                                }))
+                            };
+                        }
+
+                        this.history = archivedPeriods.map(period => ({
+                            id: period.id,
+                            startISO: period.start_date,
+                            endISO: period.end_date,
+                            budgetCents: period.budget_cents,
+                            totalSpentCents: period.total_spent_cents,
+                            closed: true,
+                            expenses: period.expenses.map(e => ({
+                                id: e.id,
+                                tsISO: e.timestamp,
+                                amountCents: e.amount_cents,
+                                note: e.note || ''
+                            }))
+                        }));
+
+                        this.saveData();
+
+                    } catch (error) {
+                        console.error('Sync error:', error);
+                        this.syncError = error.message;
+                        this.loadData();
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                },
+
+                loadData() {
+                    try {
+                        const currentStr = localStorage.getItem('budget.currentPeriod');
+                        if (currentStr) {
+                            this.currentPeriod = JSON.parse(currentStr);
+                        }
+
+                        const historyStr = localStorage.getItem('budget.history');
+                        if (historyStr) {
+                            this.history = JSON.parse(historyStr);
+                        }
+
+                        const lastBudgetStr = localStorage.getItem('budget.lastBudgetCents');
+                        if (lastBudgetStr) {
+                            this.lastBudgetCents = parseInt(lastBudgetStr);
+                            this.newBudgetAmount = this.lastBudgetCents / 100;
+                        }
+                    } catch (error) {
+                        console.error('Error loading data:', error);
+                    }
+                },
+                saveData() {
+                    try {
+                        if (this.currentPeriod) {
+                            localStorage.setItem('budget.currentPeriod', JSON.stringify(this.currentPeriod));
+                        } else {
+                            localStorage.removeItem('budget.currentPeriod');
+                        }
+
+                        localStorage.setItem('budget.history', JSON.stringify(this.history));
+
+                        if (this.lastBudgetCents !== null) {
+                            localStorage.setItem('budget.lastBudgetCents', this.lastBudgetCents.toString());
+                        }
+                    } catch (error) {
+                        console.error('Error saving data:', error);
+                    }
+                },
+                async createNewPeriod() {
+                    if (!this.newBudgetAmount || this.newBudgetAmount <= 0) return;
+
+                    const now = new Date();
+                    const end = new Date(now);
+                    end.setDate(end.getDate() + 14);
+                    const budgetCents = Math.round(this.newBudgetAmount * 100);
+
+                    try {
+                        if (this.user) {
+                            this.isSyncing = true;
+
+                            // Archive current period if exists
+                            if (this.currentPeriod) {
+                                await supabaseClient
+                                    .from('periods')
+                                    .update({ closed: true })
+                                    .eq('id', this.currentPeriod.id);
+                            }
+
+                            // Create new period in cloud
+                            const { data: newPeriod, error } = await supabaseClient
+                                .from('periods')
+                                .insert({
+                                    user_id: this.user.id,
+                                    start_date: now.toISOString(),
+                                    end_date: end.toISOString(),
+                                    budget_cents: budgetCents,
+                                    closed: false
+                                })
+                                .select()
+                                .single();
+
+                            if (error) throw error;
+
+                            // Update local state
+                            if (this.currentPeriod) {
+                                this.history.unshift({
+                                    ...this.currentPeriod,
+                                    closed: true,
+                                    totalSpentCents: this.totalSpentCents
+                                });
+                            }
+
+                            this.currentPeriod = {
+                                id: newPeriod.id,
+                                startISO: newPeriod.start_date,
+                                endISO: newPeriod.end_date,
+                                budgetCents: newPeriod.budget_cents,
+                                expenses: [],
+                                closed: false
+                            };
+
+                        } else {
+                            // Local-only mode
+                            if (this.currentPeriod) {
+                                const archivedPeriod = {
+                                    ...this.currentPeriod,
+                                    closed: true,
+                                    totalSpentCents: this.totalSpentCents
+                                };
+                                this.history.unshift(archivedPeriod);
+                            }
+
+                            this.currentPeriod = {
+                                id: this.generateId(),
+                                startISO: now.toISOString(),
+                                endISO: end.toISOString(),
+                                budgetCents: budgetCents,
+                                expenses: [],
+                                closed: false
+                            };
+                        }
+
+                        this.lastBudgetCents = budgetCents;
+                        this.newBudgetAmount = budgetCents / 100;
+                        this.newPeriodDialogVisible = false;
+                        this.saveData();
+
+                    } catch (error) {
+                        console.error('Error creating period:', error);
+                        alert('Failed to create period. Please try again.');
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                },
+                async addExpense() {
+                    if (!this.newExpenseAmount || this.newExpenseAmount <= 0) return;
+
+                    const amountCents = Math.round(this.newExpenseAmount * 100);
+                    const note = this.newExpenseNote.trim() || '';
+                    const timestamp = new Date().toISOString();
+
+                    try {
+                        if (this.user) {
+                            this.isSyncing = true;
+
+                            // Create expense in cloud
+                            const { data: newExpense, error } = await supabaseClient
+                                .from('expenses')
+                                .insert({
+                                    period_id: this.currentPeriod.id,
+                                    user_id: this.user.id,
+                                    amount_cents: amountCents,
+                                    note: note,
+                                    timestamp: timestamp
+                                })
+                                .select()
+                                .single();
+
+                            if (error) throw error;
+
+                            // Add to local state
+                            this.currentPeriod.expenses.push({
+                                id: newExpense.id,
+                                tsISO: newExpense.timestamp,
+                                amountCents: newExpense.amount_cents,
+                                note: newExpense.note || ''
+                            });
+
+                        } else {
+                            // Local-only mode
+                            this.currentPeriod.expenses.push({
+                                id: this.generateId(),
+                                tsISO: timestamp,
+                                amountCents: amountCents,
+                                note: note
+                            });
+                        }
+
+                        // Reset form
+                        this.newExpenseAmount = null;
+                        this.newExpenseNote = '';
+                        this.saveData();
+
+                    } catch (error) {
+                        console.error('Error adding expense:', error);
+                        alert('Failed to add expense. Please try again.');
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                },
+                async deleteExpense(expenseId) {
+                    try {
+                        if (this.user) {
+                            this.isSyncing = true;
+
+                            // Delete from cloud
+                            const { error } = await supabaseClient
+                                .from('expenses')
+                                .delete()
+                                .eq('id', expenseId);
+
+                            if (error) throw error;
+                        }
+
+                        // Remove from local state
+                        const index = this.currentPeriod.expenses.findIndex(e => e.id === expenseId);
+                        if (index !== -1) {
+                            this.currentPeriod.expenses.splice(index, 1);
+                            this.saveData();
+                        }
+
+                    } catch (error) {
+                        console.error('Error deleting expense:', error);
+                        alert('Failed to delete expense. Please try again.');
+                    } finally {
+                        this.isSyncing = false;
+                    }
+                },
+                showNewPeriodDialog() {
+                    if (this.lastBudgetCents) {
+                        this.newBudgetAmount = this.lastBudgetCents / 100;
+                    }
+                    this.newPeriodDialogVisible = true;
+                },
+                confirmNewPeriod() {
+                    this.createNewPeriod();
+                },
+                formatCurrency(cents) {
+                    const dollars = cents / 100;
+                    return new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(dollars);
+                },
+                formatDateRange(startISO, endISO) {
+                    const start = new Date(startISO);
+                    const end = new Date(endISO);
+                    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                    return `${start.toLocaleDateString('en-US', options)} – ${end.toLocaleDateString('en-US', options)}`;
+                },
+                formatTimestamp(iso) {
+                    const date = new Date(iso);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+
+                    if (diffMins < 1) return 'Just now';
+                    if (diffMins < 60) return `${diffMins}m ago`;
+                    if (diffHours < 24) return `${diffHours}h ago`;
+                    if (diffDays < 7) return `${diffDays}d ago`;
+
+                    return date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    });
+                },
+                generateId() {
+                    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+                }
+            },
+            mounted() {
+                this.checkAuth();
+
+                // Listen for auth changes
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    this.user = session?.user || null;
+                    if (event === 'SIGNED_IN') {
+                        this.syncFromCloud();
+                    }
+                });
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
