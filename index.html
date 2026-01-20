@@ -705,12 +705,12 @@
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js"></script>
 
-    <script>
+    <script type="module">
         const { createApp } = Vue;
 
-        // Supabase configuration
-        const SUPABASE_URL = 'https://usilhyecigcpuzsoavtb.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzaWxoeWVjaWdjcHV6c29hdnRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNDU5ODMsImV4cCI6MjA4MzkyMTk4M30.OS69oyATVgxLdElzKTLy2ddYo_YdL6qpSt1rBAU553k';
+        // Supabase configuration from environment variables
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+        const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         createApp({
