@@ -35,7 +35,7 @@
 
         .app-header {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
             padding: 1rem;
@@ -1276,6 +1276,7 @@
 <body>
     <div id="app">
         <div class="app-header">
+            <div v-if="user" class="app-title">Save It!</div>
             <div class="header-right">
                 <div v-if="isSyncing" class="period-info">
                     ⟳ Syncing...
