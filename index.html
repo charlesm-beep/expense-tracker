@@ -2248,13 +2248,6 @@
                 },
 
                 async checkAuth() {
-                    // Add overall timeout of 20 seconds
-                    const timeoutId = setTimeout(() => {
-                        console.error('checkAuth timed out after 20 seconds');
-                        this.syncError = 'Loading timed out. Please check your connection.';
-                        this.isLoading = false;
-                    }, 20000);
-
                     try {
                         console.log('Starting checkAuth...');
                         this.isLoading = true;
@@ -2293,7 +2286,6 @@
                         // If auth fails, try to load from localStorage
                         this.loadData();
                     } finally {
-                        clearTimeout(timeoutId);
                         console.log('Setting isLoading to false');
                         this.isLoading = false;
                     }
