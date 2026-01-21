@@ -2993,6 +2993,8 @@
                                     user_id: this.user.id,
                                     onboarding_completed: true,
                                     updated_at: new Date().toISOString()
+                                }, {
+                                    onConflict: 'user_id'
                                 })
                                 .then(({ error }) => {
                                     if (error) {
@@ -3048,6 +3050,8 @@
                                     user_id: this.user.id,
                                     onboarding_completed: true,
                                     updated_at: new Date().toISOString()
+                                }, {
+                                    onConflict: 'user_id'
                                 })
                                 .then(({ error }) => {
                                     if (error) console.error('Error updating profile:', error);
