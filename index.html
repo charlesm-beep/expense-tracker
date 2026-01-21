@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Save It!">
     <meta name="theme-color" content="#2e7d32">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.supabase.in; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none';">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Save It!</title>
@@ -1924,7 +1924,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
 
     <!-- Vue 3 -->
-    <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js" crossorigin="anonymous"></script>
 
     <script type="module">
         const { createApp } = Vue;
