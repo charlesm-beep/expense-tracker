@@ -7,8 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Save It!">
     <meta name="theme-color" content="#2e7d32">
-    <!-- CSP temporarily disabled for debugging - re-enable for production -->
-    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.supabase.in; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none';"> -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.supabase.in; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none';">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -1316,7 +1315,13 @@
 
         <!-- Loading State -->
         <div v-if="isLoading" class="card welcome-screen">
-            <div class="welcome-text">Loading...</div>
+            <div v-if="!syncError" class="welcome-text">Loading...</div>
+            <div v-else>
+                <div class="error-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                <div class="welcome-text" style="color: #d32f2f; margin-bottom: 1rem;">{{ syncError }}</div>
+                <button class="btn-primary" @click="retrySync" style="margin-bottom: 0.5rem;">Retry</button>
+                <button class="btn-secondary" @click="useOfflineMode">Use Offline Mode</button>
+            </div>
         </div>
 
         <!-- Login Screen -->
@@ -2143,6 +2148,20 @@
                     }
                 },
 
+                async retrySync() {
+                    this.syncError = null;
+                    this.isSyncing = false;
+                    await this.checkAuth();
+                },
+
+                useOfflineMode() {
+                    console.log('Using offline mode...');
+                    this.syncError = null;
+                    this.isLoading = false;
+                    this.isSyncing = false;
+                    this.loadData();
+                },
+
                 async clearAllData() {
                     try {
                         this.showClearDataConfirm = false;
@@ -2284,13 +2303,20 @@
 
                         console.log('syncFromCloud: Fetching periods...');
 
-                        const { data: periods, error } = await supabaseClient
+                        // Add timeout to prevent hanging forever (15 seconds)
+                        const timeoutPromise = new Promise((_, reject) => {
+                            setTimeout(() => reject(new Error('Sync timed out. Please check your connection and try again.')), 15000);
+                        });
+
+                        const fetchPromise = supabaseClient
                             .from('periods')
                             .select(`
                                 *,
                                 expenses (*)
                             `)
                             .order('start_date', { ascending: false });
+
+                        const { data: periods, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
                         if (error) {
                             console.error('syncFromCloud: Error fetching periods:', error);
