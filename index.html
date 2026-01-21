@@ -2248,6 +2248,13 @@
                 },
 
                 async checkAuth() {
+                    // Add overall timeout of 20 seconds
+                    const timeoutId = setTimeout(() => {
+                        console.error('checkAuth timed out after 20 seconds');
+                        this.syncError = 'Loading timed out. Please check your connection.';
+                        this.isLoading = false;
+                    }, 20000);
+
                     try {
                         console.log('Starting checkAuth...');
                         this.isLoading = true;
@@ -2282,9 +2289,11 @@
                         console.log('checkAuth complete!');
                     } catch (error) {
                         console.error('Error during auth check:', error);
+                        this.syncError = error.message || 'Failed to load. Please try again.';
                         // If auth fails, try to load from localStorage
                         this.loadData();
                     } finally {
+                        clearTimeout(timeoutId);
                         console.log('Setting isLoading to false');
                         this.isLoading = false;
                     }
@@ -2304,20 +2313,13 @@
 
                         console.log('syncFromCloud: Fetching periods...');
 
-                        // Add timeout to prevent hanging forever (15 seconds)
-                        const timeoutPromise = new Promise((_, reject) => {
-                            setTimeout(() => reject(new Error('Sync timed out. Please check your connection and try again.')), 15000);
-                        });
-
-                        const fetchPromise = supabaseClient
+                        const { data: periods, error } = await supabaseClient
                             .from('periods')
                             .select(`
                                 *,
                                 expenses (*)
                             `)
                             .order('start_date', { ascending: false });
-
-                        const { data: periods, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
                         if (error) {
                             console.error('syncFromCloud: Error fetching periods:', error);
