@@ -1316,7 +1316,13 @@
 
         <!-- Loading State -->
         <div v-if="isLoading" class="card welcome-screen">
-            <div v-if="!syncError" class="welcome-text">Loading...</div>
+            <div v-if="!syncError">
+                <div class="welcome-text">Loading...</div>
+                <div v-if="showSlowLoadingMessage" style="margin-top: 1rem; color: #666; font-size: 0.875rem;">
+                    <p style="margin-bottom: 0.5rem;">Taking longer than expected...</p>
+                    <button class="btn-secondary" @click="useOfflineMode" style="font-size: 0.875rem;">Skip to Offline Mode</button>
+                </div>
+            </div>
             <div v-else>
                 <div class="error-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
                 <div class="welcome-text" style="color: #d32f2f; margin-bottom: 1rem;">{{ syncError }}</div>
@@ -1956,7 +1962,9 @@
                     onboardingStep: 1,
                     onboardingBudget: null,
                     deleteConfirmExpenseId: null,
-                    showClearDataConfirm: false
+                    showClearDataConfirm: false,
+                    showSlowLoadingMessage: false,
+                    loadingTimeoutId: null
                 };
             },
             computed: {
@@ -2251,6 +2259,12 @@
                     try {
                         console.log('Starting checkAuth...');
                         this.isLoading = true;
+                        this.showSlowLoadingMessage = false;
+
+                        // Show "taking too long" message after 5 seconds
+                        this.loadingTimeoutId = setTimeout(() => {
+                            this.showSlowLoadingMessage = true;
+                        }, 5000);
 
                         console.log('Getting session...');
                         const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
@@ -2286,6 +2300,11 @@
                         // If auth fails, try to load from localStorage
                         this.loadData();
                     } finally {
+                        if (this.loadingTimeoutId) {
+                            clearTimeout(this.loadingTimeoutId);
+                            this.loadingTimeoutId = null;
+                        }
+                        this.showSlowLoadingMessage = false;
                         console.log('Setting isLoading to false');
                         this.isLoading = false;
                     }
