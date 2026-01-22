@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Save It!">
     <meta name="theme-color" content="#2e7d32">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.supabase.in; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.supabase.in https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Save It!</title>
@@ -1293,6 +1293,12 @@
         <div class="app-header">
             <div v-if="user" class="app-title">Save It!</div>
             <div class="header-right">
+                <div v-if="pendingChanges && !isSyncing" class="period-info" style="color: #f57c00;">
+                    ● Unsaved Changes
+                </div>
+                <div v-if="user && !navigator.onLine" class="period-info" style="color: #f57c00;">
+                    📡 Offline
+                </div>
                 <div v-if="isSyncing" class="period-info">
                     ⟳ Syncing...
                 </div>
@@ -1336,12 +1342,30 @@
                 <div v-if="showSlowLoadingMessage" style="margin-top: 1rem; color: #666; font-size: 0.875rem;">
                     <p style="margin-bottom: 0.5rem;">Taking longer than expected...</p>
                     <button class="btn-secondary" @click="useOfflineMode" style="font-size: 0.875rem;">Skip to Offline Mode</button>
+                    <button v-if="user" class="btn-secondary" @click="forceSignOut" style="margin-top: 0.5rem; font-size: 0.875rem;">Sign Out</button>
                 </div>
             </div>
             <div v-else>
                 <div class="error-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
                 <div class="welcome-text" style="color: #d32f2f; margin-bottom: 1rem;">{{ syncError }}</div>
-                <button class="btn-primary" @click="retrySync" style="margin-bottom: 0.5rem;">Retry</button>
+
+                <!-- Specific guidance based on error type -->
+                <div style="font-size: 0.875rem; color: #666; margin-bottom: 1rem; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+                    <p v-if="syncError.includes('timed out')" style="margin-bottom: 0.5rem;">
+                        Your connection may be slow or unstable. Try:
+                    </p>
+                    <p v-else-if="syncError.includes('network') || syncError.includes('connection')" style="margin-bottom: 0.5rem;">
+                        Cannot reach the server. Check your internet connection.
+                    </p>
+                    <ul v-if="syncError.includes('timed out') || syncError.includes('network') || syncError.includes('connection')"
+                        style="margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0;">
+                        <li>Switching to offline mode (data stays on device)</li>
+                        <li>Checking your internet connection</li>
+                        <li>Trying again in a moment</li>
+                    </ul>
+                </div>
+
+                <button class="btn-primary" @click="retrySync" style="margin-bottom: 0.5rem;">Retry Connection</button>
                 <button class="btn-secondary" @click="useOfflineMode">Use Offline Mode</button>
             </div>
         </div>
@@ -1981,7 +2005,10 @@
                     deleteConfirmExpenseId: null,
                     showClearDataConfirm: false,
                     showSlowLoadingMessage: false,
-                    loadingTimeoutId: null
+                    loadingTimeoutId: null,
+                    syncRetryAttempted: false,
+                    lastSyncTime: null,
+                    pendingChanges: false
                 };
             },
             computed: {
@@ -2254,11 +2281,28 @@
                     }
                 },
 
+                async forceSignOut() {
+                    // Force sign out even if stuck in loading
+                    this.isLoading = false;
+                    this.isSyncing = false;
+                    await this.signOut();
+                },
+
                 async signOut() {
-                    const { error } = await supabaseClient.auth.signOut();
-                    if (error) {
-                        alert('Error signing out: ' + error.message);
-                    } else {
+                    try {
+                        const { error } = await this.promiseWithTimeout(
+                            supabaseClient.auth.signOut(),
+                            5000, // 5 second timeout
+                            'Sign out timed out. Signing out locally.'
+                        );
+                        if (error) {
+                            console.error('Error signing out:', error);
+                            alert('Error signing out: ' + error.message);
+                        }
+                    } catch (error) {
+                        console.error('Sign out timeout:', error);
+                        // Continue with local sign out even if network fails
+                    } finally {
                         this.user = null;
                         this.currentPeriod = null;
                         this.history = [];
@@ -2273,6 +2317,14 @@
                 },
 
                 async checkAuth() {
+                    // Maximum loading timeout - force exit after 15 seconds
+                    const maxLoadingTimeout = setTimeout(() => {
+                        console.error('Force exiting loading state after 15 seconds');
+                        this.isLoading = false;
+                        this.isSyncing = false;
+                        this.syncError = 'Loading timed out. Please refresh or use offline mode.';
+                    }, 15000);
+
                     try {
                         console.log('Starting checkAuth...');
                         this.isLoading = true;
@@ -2284,13 +2336,61 @@
                         }, 5000);
 
                         console.log('Getting session...');
-                        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                        const { data: { session }, error: sessionError } = await this.promiseWithTimeout(
+                            supabaseClient.auth.getSession(),
+                            8000, // 8 second timeout
+                            'Authentication timed out. Please check your connection.'
+                        );
                         if (sessionError) {
                             console.error('Session error:', sessionError);
                             throw sessionError;
                         }
 
-                        this.user = session?.user || null;
+                        // Check if session is expired or about to expire
+                        if (session && session.expires_at) {
+                            const expiresAt = session.expires_at * 1000; // Convert to milliseconds
+                            const now = Date.now();
+                            const timeUntilExpiry = expiresAt - now;
+
+                            console.log('Session expires at:', new Date(expiresAt).toISOString());
+                            console.log('Time until expiry (minutes):', Math.round(timeUntilExpiry / 60000));
+
+                            // If session is expired or expires in less than 5 minutes, refresh it
+                            if (timeUntilExpiry < 5 * 60 * 1000) {
+                                console.log('Session is expired or expiring soon, refreshing...');
+                                try {
+                                    const { data: refreshData, error: refreshError } = await this.promiseWithTimeout(
+                                        supabaseClient.auth.refreshSession(),
+                                        8000,
+                                        'Session refresh timed out.'
+                                    );
+
+                                    if (refreshError) {
+                                        console.error('Failed to refresh session:', refreshError);
+                                        console.log('Clearing invalid session and starting fresh...');
+                                        await supabaseClient.auth.signOut();
+                                        this.user = null;
+                                        this.loadData();
+                                        return; // Exit checkAuth early
+                                    }
+
+                                    console.log('Session refreshed successfully');
+                                    this.user = refreshData.session?.user || null;
+                                } catch (refreshErr) {
+                                    console.error('Session refresh failed:', refreshErr);
+                                    console.log('Clearing invalid session and starting fresh...');
+                                    await supabaseClient.auth.signOut();
+                                    this.user = null;
+                                    this.loadData();
+                                    return; // Exit checkAuth early
+                                }
+                            } else {
+                                this.user = session?.user || null;
+                            }
+                        } else {
+                            this.user = session?.user || null;
+                        }
+
                         console.log('User:', this.user ? 'Logged in' : 'Not logged in');
 
                         if (this.user) {
@@ -2317,6 +2417,7 @@
                         // If auth fails, try to load from localStorage
                         this.loadData();
                     } finally {
+                        clearTimeout(maxLoadingTimeout);  // Clear force exit timeout
                         if (this.loadingTimeoutId) {
                             clearTimeout(this.loadingTimeoutId);
                             this.loadingTimeoutId = null;
@@ -2328,26 +2429,48 @@
                 },
 
                 async syncFromCloud() {
+                    console.log('=== _syncFromCloudImpl: ENTRY ===');
+
                     // Prevent duplicate syncs
                     if (this.isSyncing) {
-                        console.log('syncFromCloud: Already syncing, skipping...');
+                        console.log('_syncFromCloudImpl: Already syncing, skipping...');
                         return;
                     }
 
                     try {
                         console.log('syncFromCloud: Starting sync...');
                         this.isSyncing = true;
+                        console.log('syncFromCloud: isSyncing set to TRUE');
                         this.syncError = null;
 
-                        console.log('syncFromCloud: Fetching periods...');
+                        // Verify we have a valid session before syncing
+                        console.log('syncFromCloud: About to verify session...');
+                        const { data: { session } } = await this.promiseWithTimeout(
+                            supabaseClient.auth.getSession(),
+                            5000, // 5 second timeout
+                            'Session verification timed out'
+                        );
+                        console.log('syncFromCloud: Session check completed');
 
-                        const { data: periods, error } = await supabaseClient
-                            .from('periods')
-                            .select(`
-                                *,
-                                expenses (*)
-                            `)
-                            .order('start_date', { ascending: false });
+                        if (!session || !session.user) {
+                            console.error('syncFromCloud: No valid session found');
+                            throw new Error('No valid session. Please sign in again.');
+                        }
+                        console.log('syncFromCloud: Session verified, user_id:', session.user.id);
+
+                        console.log('syncFromCloud: About to fetch periods...');
+
+                        const { data: periods, error } = await this.promiseWithTimeout(
+                            supabaseClient
+                                .from('periods')
+                                .select(`
+                                    *,
+                                    expenses (*)
+                                `)
+                                .order('start_date', { ascending: false }),
+                            10000, // 10 second timeout
+                            'Network request timed out. Please check your connection.'
+                        );
 
                         if (error) {
                             console.error('syncFromCloud: Error fetching periods:', error);
@@ -2421,13 +2544,66 @@
                         this.saveData();
                         console.log('syncFromCloud: Sync complete!');
 
+                        // Track successful sync
+                        this.lastSyncTime = new Date();
+                        this.pendingChanges = false;
+                        localStorage.setItem('budget.lastSyncTime', this.lastSyncTime.toISOString());
+
                     } catch (error) {
+                        console.error('=== syncFromCloud: CATCH BLOCK ENTERED ===');
                         console.error('syncFromCloud: Sync error:', error);
+                        console.error('syncFromCloud: Error type:', error.constructor.name);
+                        console.error('syncFromCloud: Error message:', error.message);
                         this.syncError = error.message;
+
+                        // Check if error is due to authentication issues
+                        const isAuthError = error.message && (
+                            error.message.includes('JWT') ||
+                            error.message.includes('expired') ||
+                            error.message.includes('invalid') ||
+                            error.message.includes('401') ||
+                            error.message.includes('unauthorized') ||
+                            error.code === 'PGRST301' // PostgREST JWT error
+                        );
+
+                        if (isAuthError) {
+                            console.error('Authentication error detected, clearing session...');
+                            this.syncError = 'Session expired. Please sign in again.';
+                            // Clear the invalid session
+                            console.log('Calling signOut to clear invalid session...');
+                            await supabaseClient.auth.signOut();
+                            console.log('SignOut complete, clearing user...');
+                            this.user = null;
+                            this.loadData();
+                            console.log('LoadData complete, returning...');
+                            return;
+                        }
+
+                        // Auto-retry once after 2 seconds for network errors
+                        if (!this.syncRetryAttempted && (error.message.includes('timed out') || error.message.includes('network'))) {
+                            console.log('Auto-retrying sync in 2 seconds...');
+                            this.syncRetryAttempted = true;
+                            setTimeout(async () => {
+                                if (this.syncError) { // Only retry if still showing error
+                                    console.log('Attempting auto-retry...');
+                                    this.isSyncing = false; // Reset sync flag before retry
+                                    try {
+                                        await this.syncFromCloud();
+                                        this.syncError = null; // Clear error on success
+                                    } catch (retryError) {
+                                        console.error('Auto-retry failed:', retryError);
+                                        // Don't overwrite syncError, keep showing original error
+                                    }
+                                }
+                            }, 2000);
+                        }
+
                         this.loadData();
                     } finally {
+                        console.log('=== syncFromCloud: FINALLY BLOCK ENTERED ===');
                         console.log('syncFromCloud: Setting isSyncing to false');
                         this.isSyncing = false;
+                        console.log('syncFromCloud: isSyncing set to FALSE');
                     }
                 },
 
@@ -2495,25 +2671,33 @@
 
                             // Archive current period if exists
                             if (this.currentPeriod) {
-                                await supabaseClient
-                                    .from('periods')
-                                    .update({ closed: true })
-                                    .eq('id', this.currentPeriod.id);
+                                await this.promiseWithTimeout(
+                                    supabaseClient
+                                        .from('periods')
+                                        .update({ closed: true })
+                                        .eq('id', this.currentPeriod.id),
+                                    10000, // 10 second timeout
+                                    'Failed to archive current period. Please check your connection.'
+                                );
                             }
 
                             // Create new period in cloud
-                            const { data: newPeriod, error } = await supabaseClient
-                                .from('periods')
-                                .insert({
-                                    user_id: this.user.id,
-                                    start_date: start.toISOString(),
-                                    end_date: end.toISOString(),
-                                    budget_cents: budgetCents,
-                                    days_marked_done: [],
-                                    closed: false
-                                })
-                                .select()
-                                .single();
+                            const { data: newPeriod, error } = await this.promiseWithTimeout(
+                                supabaseClient
+                                    .from('periods')
+                                    .insert({
+                                        user_id: this.user.id,
+                                        start_date: start.toISOString(),
+                                        end_date: end.toISOString(),
+                                        budget_cents: budgetCents,
+                                        days_marked_done: [],
+                                        closed: false
+                                    })
+                                    .select()
+                                    .single(),
+                                10000, // 10 second timeout
+                                'Failed to create new period. Please check your connection.'
+                            );
 
                             if (error) throw error;
 
@@ -2566,6 +2750,12 @@
 
                     } catch (error) {
                         console.error('Error creating period:', error);
+
+                        // If sync failed but we're signed in, mark as pending changes
+                        if (this.user) {
+                            this.pendingChanges = true;
+                        }
+
                         alert('Failed to create period. ' + this.sanitizeError(error));
                     } finally {
                         this.isSyncing = false;
@@ -2583,17 +2773,21 @@
                             this.isSyncing = true;
 
                             // Create expense in cloud
-                            const { data: newExpense, error } = await supabaseClient
-                                .from('expenses')
-                                .insert({
-                                    period_id: this.currentPeriod.id,
-                                    user_id: this.user.id,
-                                    amount_cents: amountCents,
-                                    note: note,
-                                    timestamp: timestamp
-                                })
-                                .select()
-                                .single();
+                            const { data: newExpense, error } = await this.promiseWithTimeout(
+                                supabaseClient
+                                    .from('expenses')
+                                    .insert({
+                                        period_id: this.currentPeriod.id,
+                                        user_id: this.user.id,
+                                        amount_cents: amountCents,
+                                        note: note,
+                                        timestamp: timestamp
+                                    })
+                                    .select()
+                                    .single(),
+                                10000, // 10 second timeout
+                                'Failed to save expense. Please check your connection.'
+                            );
 
                             if (error) throw error;
 
@@ -2622,6 +2816,12 @@
 
                     } catch (error) {
                         console.error('Error adding expense:', error);
+
+                        // If sync failed but we're signed in, mark as pending changes
+                        if (this.user) {
+                            this.pendingChanges = true;
+                        }
+
                         alert('Failed to add expense. Please try again.');
                     } finally {
                         this.isSyncing = false;
@@ -2641,10 +2841,14 @@
                             this.isSyncing = true;
 
                             // Delete from cloud first
-                            const { error } = await supabaseClient
-                                .from('expenses')
-                                .delete()
-                                .eq('id', expenseId);
+                            const { error } = await this.promiseWithTimeout(
+                                supabaseClient
+                                    .from('expenses')
+                                    .delete()
+                                    .eq('id', expenseId),
+                                10000, // 10 second timeout
+                                'Failed to delete expense. Please check your connection.'
+                            );
 
                             if (error) throw error;
 
@@ -2665,6 +2869,12 @@
 
                     } catch (error) {
                         console.error('Error deleting expense:', error);
+
+                        // If sync failed but we're signed in, mark as pending changes
+                        if (this.user) {
+                            this.pendingChanges = true;
+                        }
+
                         alert('Failed to delete expense. Please try again.');
                     } finally {
                         if (this.user) {
@@ -2688,10 +2898,14 @@
                             this.isSyncing = true;
 
                             // Update current period budget
-                            const { error } = await supabaseClient
-                                .from('periods')
-                                .update({ budget_cents: budgetCents })
-                                .eq('id', this.currentPeriod.id);
+                            const { error } = await this.promiseWithTimeout(
+                                supabaseClient
+                                    .from('periods')
+                                    .update({ budget_cents: budgetCents })
+                                    .eq('id', this.currentPeriod.id),
+                                10000, // 10 second timeout
+                                'Failed to update budget. Please check your connection.'
+                            );
 
                             if (error) throw error;
 
@@ -2707,12 +2921,26 @@
 
                     } catch (error) {
                         console.error('Error updating budget:', error);
+
+                        // If sync failed but we're signed in, mark as pending changes
+                        if (this.user) {
+                            this.pendingChanges = true;
+                        }
+
                         alert('Failed to update budget. Please try again.');
                     } finally {
                         if (this.user) {
                             this.isSyncing = false;
                         }
                     }
+                },
+                promiseWithTimeout(promise, timeoutMs, errorMessage) {
+                    return Promise.race([
+                        promise,
+                        new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+                        )
+                    ]);
                 },
                 sanitizeInput(text) {
                     // Remove HTML tags and potentially dangerous characters
@@ -3100,11 +3328,15 @@
                     if (this.user) {
                         try {
                             console.log('checkOnboardingStatus: Checking cloud status...');
-                            const { data, error } = await supabaseClient
-                                .from('user_profiles')
-                                .select('onboarding_completed')
-                                .eq('user_id', this.user.id)
-                                .single();
+                            const { data, error } = await this.promiseWithTimeout(
+                                supabaseClient
+                                    .from('user_profiles')
+                                    .select('onboarding_completed')
+                                    .eq('user_id', this.user.id)
+                                    .single(),
+                                10000, // 10 second timeout
+                                'Failed to check onboarding status. Please check your connection.'
+                            );
 
                             console.log('checkOnboardingStatus: Cloud response:', { data, error });
 
@@ -3147,10 +3379,14 @@
                         if (this.user) {
                             this.isSyncing = true;
 
-                            const { error } = await supabaseClient
-                                .from('periods')
-                                .update({ days_marked_done: this.currentPeriod.daysMarkedDone })
-                                .eq('id', this.currentPeriod.id);
+                            const { error } = await this.promiseWithTimeout(
+                                supabaseClient
+                                    .from('periods')
+                                    .update({ days_marked_done: this.currentPeriod.daysMarkedDone })
+                                    .eq('id', this.currentPeriod.id),
+                                10000, // 10 second timeout
+                                'Failed to update. Please check your connection.'
+                            );
 
                             if (error) throw error;
                         }
@@ -3181,6 +3417,21 @@
                         await this.syncFromCloud();
                         await this.checkOnboardingStatus();
                     }
+                });
+
+                // Listen for online/offline events
+                window.addEventListener('online', async () => {
+                    console.log('Network connection restored');
+                    if (this.user) {
+                        console.log('Attempting to sync after reconnection...');
+                        this.syncRetryAttempted = false; // Reset retry flag
+                        await this.syncFromCloud();
+                    }
+                });
+
+                window.addEventListener('offline', () => {
+                    console.log('Network connection lost - offline mode');
+                    // Don't show error, just work offline
                 });
             }
         }).mount('#app');
