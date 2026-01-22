@@ -1296,7 +1296,7 @@
                 <div v-if="pendingChanges && !isSyncing" class="period-info" style="color: #f57c00;">
                     ● Unsaved Changes
                 </div>
-                <div v-if="user && !navigator.onLine" class="period-info" style="color: #f57c00;">
+                <div v-if="user && isOffline" class="period-info" style="color: #f57c00;">
                     📡 Offline
                 </div>
                 <div v-if="isSyncing" class="period-info">
@@ -2186,6 +2186,10 @@
                     }
 
                     return '??';
+                },
+                isOffline() {
+                    // Safely check if navigator is available and browser is offline
+                    return typeof navigator !== 'undefined' && navigator.onLine === false;
                 }
             },
             methods: {
