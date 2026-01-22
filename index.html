@@ -2398,21 +2398,34 @@
                         console.log('User:', this.user ? 'Logged in' : 'Not logged in');
 
                         if (this.user) {
-                            console.log('Syncing from cloud...');
-                            await this.syncFromCloud();
+                            // Load cached data first for instant display
+                            console.log('Loading cached data from localStorage...');
+                            this.loadData();
 
                             console.log('Checking onboarding status...');
                             await this.checkOnboardingStatus();
+
+                            // Sync from cloud in background (non-blocking)
+                            console.log('Starting background sync from cloud...');
+                            this.syncFromCloud().catch(err => {
+                                console.error('Background sync failed:', err);
+                                // Sync error is already handled in syncFromCloud
+                            });
                         } else {
                             console.log('Loading from localStorage...');
                             this.loadData();
                         }
 
-                        console.log('Migrating periods...');
-                        await this.migrateTo7DayPeriod();
-
-                        console.log('Checking rollover...');
-                        await this.checkAndRolloverPeriod();
+                        // Run migration and rollover in background (non-blocking)
+                        console.log('Running migration and rollover checks in background...');
+                        Promise.all([
+                            this.migrateTo7DayPeriod(),
+                            this.checkAndRolloverPeriod()
+                        ]).then(() => {
+                            console.log('Migration and rollover complete');
+                        }).catch(err => {
+                            console.error('Migration/rollover error:', err);
+                        });
 
                         console.log('checkAuth complete!');
                     } catch (error) {
