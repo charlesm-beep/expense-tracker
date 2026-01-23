@@ -20,16 +20,16 @@ const isSelected = computed(() => {
 const cellClasses = computed(() =>
   cn(
     'aspect-square rounded-full flex items-center justify-center cursor-pointer transition-all duration-300',
-    'border-2 hover:scale-110',
+    'border-4 hover:scale-110',
     {
-      // Selected state (not complete) - subtle shadow and darker border
-      'border-gray-400 bg-gray-50 text-gray-900 shadow-md':
+      // Selected state (not complete) - bold emerald ring
+      'border-emerald-500 bg-emerald-50 text-gray-900 shadow-lg ring-4 ring-emerald-200 scale-105':
         isSelected.value && !props.day.isComplete,
       // Complete state - green with checkmark
       'bg-green-600 border-green-600 text-white':
         props.day.isComplete && !isSelected.value,
-      // Complete + selected - green with subtle shadow
-      'bg-green-600 border-green-700 text-white shadow-md':
+      // Complete + selected - bold emerald ring with green background
+      'bg-green-600 border-emerald-500 text-white shadow-lg ring-4 ring-emerald-200 scale-105':
         props.day.isComplete && isSelected.value,
       // Today (not complete, not selected) - ring border
       'border-green-600 bg-white text-gray-900':
@@ -54,12 +54,14 @@ function handleClick() {
     @click="handleClick"
     :title="`${day.dayName}, ${day.dayNumber}`"
   >
-    <div v-if="!day.isComplete" class="flex flex-col items-center">
-      <div class="text-[10px] font-semibold uppercase leading-none mb-0.5">
-        {{ dayInitial }}
+    <div class="flex flex-col items-center justify-center px-1">
+      <div v-if="day.isComplete" class="text-lg font-bold mb-0.5">✓</div>
+      <div class="text-[9px] font-semibold leading-tight text-center">
+        {{ day.dayName }}
       </div>
-      <div class="text-[10px] leading-none">{{ day.dayNumber }}</div>
+      <div class="text-[8px] leading-tight opacity-90">
+        {{ day.dayNumber }}
+      </div>
     </div>
-    <div v-else class="text-xl font-bold">✓</div>
   </button>
 </template>

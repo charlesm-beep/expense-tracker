@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useFormatters } from '@/composables/useFormatters'
+import { useExpenses } from '@/composables/useExpenses'
 import { Button } from '@/components/ui/button'
 import { XIcon } from 'lucide-vue-next'
-import DeleteExpenseDialog from './DeleteExpenseDialog.vue'
 import type { Expense } from '@/types'
 
 interface Props {
@@ -13,11 +12,10 @@ interface Props {
 const props = defineProps<Props>()
 
 const { formatCurrency, formatRelativeDate } = useFormatters()
+const { deleteExpense } = useExpenses()
 
-const showDeleteDialog = ref(false)
-
-function handleDeleteClick() {
-  showDeleteDialog.value = true
+async function handleDeleteClick() {
+  await deleteExpense(props.expense.id)
 }
 </script>
 
@@ -46,9 +44,4 @@ function handleDeleteClick() {
       </Button>
     </div>
   </div>
-
-  <DeleteExpenseDialog
-    v-model:open="showDeleteDialog"
-    :expense="expense"
-  />
 </template>

@@ -73,11 +73,8 @@ async function handleAddExpense() {
 
 <template>
   <Card>
-    <CardHeader class="space-y-2">
+    <CardHeader>
       <CardTitle>Add Expense</CardTitle>
-      <Badge v-if="hasSelectedDay" variant="secondary" class="w-fit text-xs">
-        Adding to: {{ selectedDayLabel }}
-      </Badge>
     </CardHeader>
     <CardContent>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
