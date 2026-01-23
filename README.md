@@ -1,219 +1,222 @@
-# Save It!
+# Save It! - Weekly Budget Tracker
 
-A simple weekly expense tracker with cloud sync, Google OAuth authentication, and gamification features to help you build better spending habits.
+A modern Vue 3 application for tracking weekly budgets with daily logging, streaks, and cloud sync.
 
 ## Features
 
-- **Weekly Budget Periods**: Create custom weekly budget periods with automatic pro-rating for partial weeks
-- **Expense Tracking**: Add and delete expenses with notes and timestamps
-- **Real-Time Budget Monitoring**: Color-coded progress bar (green/orange/red) based on remaining budget
-- **Daily Logging Tracker**: Check off days when you've logged all your expenses to build consistency
-- **Budget Streaks**: Track how many consecutive weeks you've stayed under budget
-- **Onboarding Flow**: First-time user experience with budget setup and educational content
-- **History & Archive**: View all past budget periods with complete expense records
-- **Google Authentication**: Sign in with Google to sync your data across devices
-- **Offline Support**: Works without authentication using local storage
-- **Responsive Design**: Mobile-friendly interface
-- **Auto-Migration**: Automatically converts old 14-day periods to new 7-day weekly periods
+- 💰 **Weekly Budgets**: Set and track weekly spending budgets
+- 📅 **Daily Logging**: Mark days as complete when you're done logging expenses
+- 🔥 **Streaks & Milestones**: Build momentum with streak tracking and achievement badges
+- 📊 **Historical Data**: Review past periods and analyze spending patterns
+- ☁️ **Cloud Sync**: Automatic sync to Supabase with offline fallback
+- 📱 **Mobile-First**: Responsive design optimized for mobile devices
+- 🔐 **Google OAuth**: Secure authentication with Google Sign-In
 
 ## Tech Stack
 
-- **Frontend**: Vue 3 (CDN)
-- **Backend**: Supabase (PostgreSQL + Auth)
-- **Dev Server**: Vite
-- **Styling**: Vanilla CSS
+- **Frontend**: Vue 3, TypeScript, Vite
+- **Styling**: Tailwind CSS, Shadcn-vue
+- **State Management**: Pinia
+- **Backend**: Supabase (PostgreSQL, Auth)
+- **Deployment**: Vercel
+- **SMS Reminders**: Twilio (optional)
 
-## Prerequisites
+## Quick Start
 
-- Node.js and npm installed
-- A Supabase account and project
+### Prerequisites
 
-## Supabase Setup
+- Node.js 18+
+- npm or yarn
+- Supabase account
+- Vercel account (for deployment)
 
-1. Create a new project at [supabase.com](https://supabase.com)
+### Installation
 
-2. Run the database migration:
-   - Go to the SQL Editor in your Supabase dashboard
-   - Copy the contents of `supabase_migrations.sql`
-   - Paste and run the script
-
-   Or manually create the following database tables:
-
-### `periods` table
-```sql
-CREATE TABLE periods (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  start_date TIMESTAMP WITH TIME ZONE NOT NULL,
-  end_date TIMESTAMP WITH TIME ZONE NOT NULL,
-  budget_cents INTEGER NOT NULL,
-  total_spent_cents INTEGER DEFAULT 0,
-  closed BOOLEAN DEFAULT false,
-  days_marked_done JSONB DEFAULT '[]'::jsonb,
-  success BOOLEAN,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security
-ALTER TABLE periods ENABLE ROW LEVEL SECURITY;
-
--- Allow users to only see their own periods
-CREATE POLICY "Users can view own periods" ON periods
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own periods" ON periods
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own periods" ON periods
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own periods" ON periods
-  FOR DELETE USING (auth.uid() = user_id);
-```
-
-### `expenses` table
-```sql
-CREATE TABLE expenses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  period_id UUID REFERENCES periods(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  amount_cents INTEGER NOT NULL,
-  note TEXT,
-  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-
--- Allow users to only see their own expenses
-CREATE POLICY "Users can view own expenses" ON expenses
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own expenses" ON expenses
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own expenses" ON expenses
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own expenses" ON expenses
-  FOR DELETE USING (auth.uid() = user_id);
-```
-
-### `user_profiles` table
-```sql
-CREATE TABLE user_profiles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  onboarding_completed BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id)
-);
-
--- Create index for faster lookups
-CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
-
--- Enable Row Level Security
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-
--- Allow users to manage their own profile
-CREATE POLICY "Users can view their own profile" ON user_profiles
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own profile" ON user_profiles
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own profile" ON user_profiles
-  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
--- Grant necessary permissions
-GRANT SELECT, INSERT, UPDATE ON user_profiles TO authenticated;
-```
-
-3. Enable Google OAuth:
-   - Go to Authentication > Providers in your Supabase dashboard
-   - Enable Google provider
-   - Configure OAuth credentials from Google Cloud Console
-   - Add your site URL to authorized redirect URIs
-
-4. Get your Supabase credentials:
-   - Go to Settings > API
-   - Copy your project URL and anon/public key
-
-## Local Development Setup
-
-1. Clone the repository:
+1. **Clone the repository**:
 ```bash
 git clone <your-repo-url>
 cd ExpenseApp
 ```
 
-2. Install dependencies:
+2. **Install dependencies**:
 ```bash
 npm install
 ```
 
-3. Create a `.env` file in the root directory:
-```env
-VITE_SUPABASE_URL=your-supabase-project-url
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+3. **Set up environment variables**:
+```bash
+cp .env.example .env
 ```
 
-4. Start the development server:
+Edit `.env` and add your Supabase credentials:
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+4. **Start the development server**:
 ```bash
 npm run dev
 ```
 
-5. Open your browser to the URL shown (typically `http://localhost:5173`)
+5. **Open your browser**:
+Navigate to `http://localhost:5173`
 
-## Usage
-
-### Without Authentication (Local-Only Mode)
-- Simply start using the app without signing in
-- All data is stored in your browser's localStorage
-- Data will not sync across devices
-
-### With Google Authentication
-- Click "Sign in with Google"
-- Authorize the application
-- Your data will automatically sync to Supabase
-- Access your expenses from any device
-
-### Managing Budget Periods
-1. Complete the onboarding flow (first-time users only)
-2. Enter your weekly budget amount
-3. Click "Create New Period" to start a new week
-4. Add expenses as you spend throughout the week
-5. Monitor your remaining budget and progress in real-time
-6. Mark days as "done" when you've logged all expenses for that day
-7. Periods automatically roll over on Sunday nights (or manually create a new period)
-8. Build streaks by staying under budget for consecutive weeks!
-
-## Build for Production
+## Development
 
 ```bash
-npm run build
-```
+# Start dev server
+npm run dev
 
-The production-ready files will be in the `dist/` directory.
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Type check
+npm run type-check
+
+# Format code
+npm run format
+```
 
 ## Project Structure
 
 ```
-ExpenseApp/
-├── index.html          # Main application file (HTML + CSS + Vue.js)
-├── package.json        # Dependencies and scripts
-├── .env               # Environment variables (not committed)
-└── .gitignore         # Git ignore rules
+src/
+├── main.ts              # Application entry point
+├── App.vue              # Root component
+├── components/
+│   ├── ui/             # Shadcn-vue UI components
+│   ├── layout/         # Layout components (Header, Nav, etc.)
+│   ├── auth/           # Authentication components
+│   ├── budget/         # Budget management components
+│   ├── expenses/       # Expense tracking components
+│   ├── daily-logging/  # Daily completion tracker
+│   ├── onboarding/     # First-time user onboarding
+│   ├── history/        # Historical data views
+│   └── streaks/        # Streak and milestone components
+├── views/              # Page-level components
+├── composables/        # Reusable composition functions
+├── stores/             # Pinia state management
+├── lib/                # Utilities and constants
+└── types/              # TypeScript type definitions
 ```
 
-## Security Notes
+## Deployment
 
-- Supabase anonymous key is safe to expose in client-side code
-- Row Level Security (RLS) policies protect user data at the database level
-- All user data is isolated by user_id
-- Google OAuth handles authentication securely
+### Vercel (Recommended)
+
+1. **Connect your repository to Vercel**
+2. **Add environment variables** in Vercel project settings:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. **Deploy**: Vercel will automatically build and deploy
+
+Build settings:
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+### Manual Deployment
+
+```bash
+# Build
+npm run build
+
+# Deploy dist/ folder to your hosting provider
+```
+
+## Supabase Setup
+
+### Database Schema
+
+The app requires two tables:
+
+1. **periods**:
+   - `id` (uuid, primary key)
+   - `user_id` (uuid, foreign key)
+   - `start_date` (timestamp)
+   - `end_date` (timestamp)
+   - `budget_cents` (integer)
+   - `closed` (boolean)
+   - `days_marked_done` (text array)
+
+2. **expenses**:
+   - `id` (uuid, primary key)
+   - `period_id` (uuid, foreign key)
+   - `user_id` (uuid, foreign key)
+   - `amount_cents` (integer)
+   - `note` (text)
+   - `timestamp` (timestamp)
+
+### Authentication
+
+Enable Google OAuth in Supabase:
+1. Go to Authentication → Providers
+2. Enable Google
+3. Add authorized redirect URLs
+
+## Features
+
+### Budget Management
+- Create weekly budget periods
+- Update budgets mid-period
+- Pro-rated budgets for partial weeks
+- Automatic period rollover
+
+### Expense Tracking
+- Add expenses with categories
+- View expense history
+- Delete expenses
+- Real-time budget calculations
+
+### Daily Logging
+- 7-day week view with completion circles
+- Mark days as complete
+- Visual progress tracking
+
+### Streaks & Goals
+- Track current and longest streaks
+- Milestone achievements (9 levels)
+- Progress visualization
+
+### History
+- View all past periods
+- Success/failure indicators
+- Total spending and savings
+- Average spending per week
+
+## Browser Support
+
+- Chrome/Edge (latest)
+- Safari (latest)
+- Firefox (latest)
+- Mobile browsers (iOS Safari, Chrome Mobile)
+
+## Performance
+
+Production build:
+- JavaScript: 441KB (132KB gzipped)
+- CSS: 44KB (8.74KB gzipped)
+- Total: ~486KB (~141KB gzipped)
+
+## Contributing
+
+This is a personal project, but suggestions are welcome! Feel free to open an issue.
 
 ## License
 
-MIT
+Private - All Rights Reserved
+
+## Acknowledgments
+
+- Built with [Vue 3](https://vuejs.org/)
+- UI components from [Shadcn-vue](https://www.shadcn-vue.com/)
+- Icons from [Lucide](https://lucide.dev/)
+- Backend powered by [Supabase](https://supabase.com/)
+
+---
+
+**Migration Complete**: This app was successfully migrated from a single 3,457-line HTML file to a modern Vue 3 architecture. See `MIGRATION_COMPLETE.md` for details.

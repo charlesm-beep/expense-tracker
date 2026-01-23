@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 20px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Supabase Connection Test</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+
+        const SUPABASE_URL = 'https://usilhyecigcpuzsoavtb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzaWxoeWVjaWdjcHV6c29hdnRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNDU5ODMsImV4cCI6MjA4MzkyMTk4M30.OS69oyATVgxLdElzKTLy2ddYo_YdL6qpSt1rBAU553k';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function testConnection() {
+            output.innerHTML = '<p>Testing Supabase connection...</p>';
+
+            try {
+                output.innerHTML += '<h2>Test 1: Auth Session</h2>';
+                const { data: { session }, error: authError } = await supabase.auth.getSession();
+                if (authError) {
+                    output.innerHTML += '<p class="error">Auth Error: ' + authError.message + '</p>';
+                    output.innerHTML += '<pre>' + JSON.stringify(authError, null, 2) + '</pre>';
+                } else {
+                    output.innerHTML += '<p class="success">Auth session OK</p>';
+                    output.innerHTML += '<p>User: ' + (session?.user ? session.user.email : 'Not logged in') + '</p>';
+                }
+
+                output.innerHTML += '<h2>Test 2: Query periods table</h2>';
+                const { data: periods, error: periodsError } = await supabase
+                    .from('periods')
+                    .select('id')
+                    .limit(1);
+
+                if (periodsError) {
+                    output.innerHTML += '<p class="error">Periods Error: ' + periodsError.message + '</p>';
+                    output.innerHTML += '<p>Code: ' + periodsError.code + '</p>';
+                    output.innerHTML += '<p>Details: ' + periodsError.details + '</p>';
+                    output.innerHTML += '<p>Hint: ' + periodsError.hint + '</p>';
+                    output.innerHTML += '<pre>' + JSON.stringify(periodsError, null, 2) + '</pre>';
+                } else {
+                    output.innerHTML += '<p class="success">Periods table OK - Found ' + (periods?.length || 0) + ' periods</p>';
+                }
+
+                output.innerHTML += '<h2>Test 3: Query expenses table</h2>';
+                const { data: expenses, error: expensesError } = await supabase
+                    .from('expenses')
+                    .select('id')
+                    .limit(1);
+
+                if (expensesError) {
+                    output.innerHTML += '<p class="error">Expenses Error: ' + expensesError.message + '</p>';
+                    output.innerHTML += '<pre>' + JSON.stringify(expensesError, null, 2) + '</pre>';
+                } else {
+                    output.innerHTML += '<p class="success">Expenses table OK - Found ' + (expenses?.length || 0) + ' expenses</p>';
+                }
+
+                if (session?.user) {
+                    output.innerHTML += '<h2>Test 4: Full Query (periods with expenses)</h2>';
+                    const { data: fullPeriods, error: fullError } = await supabase
+                        .from('periods')
+                        .select('*, expenses(*)')
+                        .order('start_date', { ascending: false });
+
+                    if (fullError) {
+                        output.innerHTML += '<p class="error">FULL QUERY ERROR: ' + fullError.message + '</p>';
+                        output.innerHTML += '<p>Code: ' + fullError.code + '</p>';
+                        output.innerHTML += '<p>Details: ' + fullError.details + '</p>';
+                        output.innerHTML += '<p>Hint: ' + fullError.hint + '</p>';
+                        output.innerHTML += '<pre>' + JSON.stringify(fullError, null, 2) + '</pre>';
+                    } else {
+                        output.innerHTML += '<p class="success">Full query OK - Found ' + (fullPeriods?.length || 0) + ' periods</p>';
+                        output.innerHTML += '<pre>' + JSON.stringify(fullPeriods, null, 2) + '</pre>';
+                    }
+                }
+
+            } catch (error) {
+                output.innerHTML += '<p class="error">Unexpected Error: ' + error.message + '</p>';
+                console.error(error);
+            }
+        }
+
+        testConnection();
+    </script>
+</body>
+</html>
