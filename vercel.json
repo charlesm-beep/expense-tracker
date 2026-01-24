@@ -3,6 +3,12 @@
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cron-daily-reminders",
+      "schedule": "0 9 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

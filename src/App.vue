@@ -1,0 +1,93 @@
+<script setup lang="ts">
+import { onMounted, computed, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useOnboardingStore } from '@/stores/onboarding'
+import { useUIStore } from '@/stores/ui'
+import { useAuth } from '@/composables/useAuth'
+import { useBudget } from '@/composables/useBudget'
+
+// Auth components
+import LoadingScreen from '@/components/auth/LoadingScreen.vue'
+import ErrorScreen from '@/components/auth/ErrorScreen.vue'
+import LoginScreen from '@/components/auth/LoginScreen.vue'
+
+// Layout
+import AppLayout from '@/components/layout/AppLayout.vue'
+
+// Onboarding
+import OnboardingFlow from '@/components/onboarding/OnboardingFlow.vue'
+
+// Views
+import DashboardView from '@/views/DashboardView.vue'
+import GoalsView from '@/views/GoalsView.vue'
+import HistoryView from '@/views/HistoryView.vue'
+import DebugView from '@/views/DebugView.vue'
+
+const authStore = useAuthStore()
+const onboardingStore = useOnboardingStore()
+const uiStore = useUIStore()
+const { checkAuth } = useAuth()
+const { checkAndRolloverPeriod } = useBudget()
+
+// Check if debug mode is enabled via URL parameter
+const debugMode = ref(false)
+
+// Computed properties for app state
+const isLoading = computed(() => authStore.isLoading)
+const hasError = computed(() => authStore.syncError !== null)
+const isAuthenticated = computed(() => authStore.user !== null)
+const showOnboarding = computed(() => onboardingStore.showOnboarding)
+const activeTab = computed(() => uiStore.activeTab)
+
+// Current view based on active tab
+const currentView = computed(() => {
+  switch (activeTab.value) {
+    case 'goals':
+      return GoalsView
+    case 'history':
+      return HistoryView
+    case 'dashboard':
+    default:
+      return DashboardView
+  }
+})
+
+onMounted(async () => {
+  // Check for debug mode
+  const urlParams = new URLSearchParams(window.location.search)
+  debugMode.value = urlParams.get('debug') === 'true'
+
+  if (!debugMode.value) {
+    console.log('App.vue mounted, starting checkAuth...')
+    await checkAuth()
+
+    // After auth check, check for period rollover
+    if (authStore.user) {
+      console.log('User authenticated, checking for period rollover...')
+      await checkAndRolloverPeriod()
+    }
+  }
+})
+</script>
+
+<template>
+  <!-- Debug Mode -->
+  <DebugView v-if="debugMode" />
+
+  <!-- Loading State -->
+  <LoadingScreen v-else-if="isLoading" />
+
+  <!-- Error State -->
+  <ErrorScreen v-else-if="hasError" />
+
+  <!-- Login Screen (Not Authenticated) -->
+  <LoginScreen v-else-if="!isAuthenticated" />
+
+  <!-- Onboarding Flow (First Time User) -->
+  <OnboardingFlow v-else-if="showOnboarding" />
+
+  <!-- Main Application (Authenticated + Not Onboarding) -->
+  <AppLayout v-else>
+    <component :is="currentView" />
+  </AppLayout>
+</template>
