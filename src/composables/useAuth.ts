@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useBudgetStore } from '@/stores/budget'
-import { useOnboardingStore } from '@/stores/onboarding'
 import { useLocalStorage } from './useLocalStorage'
 import { useSync } from './useSync'
 import { SESSION_TIMEOUT } from '@/lib/constants'
@@ -9,7 +8,6 @@ import { SESSION_TIMEOUT } from '@/lib/constants'
 export function useAuth() {
   const authStore = useAuthStore()
   const budgetStore = useBudgetStore()
-  const onboardingStore = useOnboardingStore()
   const localStorageService = useLocalStorage()
   const { syncFromCloud } = useSync()
 
@@ -59,7 +57,6 @@ export function useAuth() {
       authStore.setUser(null)
       budgetStore.resetBudgetState()
       localStorageService.clearAllData()
-      window.localStorage.removeItem('onboarding.completed')
     }
   }
 
@@ -80,51 +77,6 @@ export function useAuth() {
     budgetStore.setHistory(history)
     budgetStore.setLastBudgetCents(lastBudgetCents)
     budgetStore.setLongestStreak(longestStreak)
-  }
-
-  async function checkOnboardingStatus(): Promise<void> {
-    console.log('checkOnboardingStatus: Starting...')
-    try {
-      const completed = window.localStorage.getItem('onboarding.completed')
-      if (completed === 'true') {
-        console.log('checkOnboardingStatus: Onboarding already completed')
-        onboardingStore.setShowOnboarding(false)
-        return
-      }
-
-      if (!authStore.user) {
-        console.log('checkOnboardingStatus: No user, skipping')
-        return
-      }
-
-      // Check if user has any periods in Supabase
-      console.log('checkOnboardingStatus: Checking for periods in Supabase...')
-      const { data: periods, error } = await supabase
-        .from('periods')
-        .select('id')
-        .limit(1)
-
-      if (error) {
-        console.error('Error checking onboarding status:', error)
-        console.error('Error details:', JSON.stringify(error, null, 2))
-        // Don't throw, just show onboarding
-        onboardingStore.setShowOnboarding(true)
-        return
-      }
-
-      if (periods && periods.length > 0) {
-        console.log('checkOnboardingStatus: User has periods, marking onboarding complete')
-        window.localStorage.setItem('onboarding.completed', 'true')
-        onboardingStore.setShowOnboarding(false)
-      } else {
-        console.log('checkOnboardingStatus: No periods found, showing onboarding')
-        onboardingStore.setShowOnboarding(true)
-      }
-    } catch (error) {
-      console.error('Error checking onboarding status:', error)
-      // Show onboarding on error to be safe
-      onboardingStore.setShowOnboarding(true)
-    }
   }
 
   async function checkAuth(): Promise<void> {
@@ -210,9 +162,6 @@ export function useAuth() {
         // Load cached data first for instant display
         console.log('Loading cached data from localStorage...')
         loadLocalData()
-
-        console.log('Checking onboarding status...')
-        await checkOnboardingStatus()
 
         // Sync from cloud in background (non-blocking)
         console.log('Starting background sync from cloud...')

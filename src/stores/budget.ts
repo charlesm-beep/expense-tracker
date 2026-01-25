@@ -146,11 +146,15 @@ export const useBudgetStore = defineStore('budget', () => {
   function toggleDayMarkedDone(dayKey: string) {
     if (!currentPeriod.value) return
 
-    const index = currentPeriod.value.days_marked_done.indexOf(dayKey)
+    const currentDays = currentPeriod.value.days_marked_done
+    const index = currentDays.indexOf(dayKey)
+
     if (index > -1) {
-      currentPeriod.value.days_marked_done.splice(index, 1)
+      // Remove the day - create new array to ensure reactivity
+      currentPeriod.value.days_marked_done = currentDays.filter((d) => d !== dayKey)
     } else {
-      currentPeriod.value.days_marked_done.push(dayKey)
+      // Add the day - create new array to ensure reactivity
+      currentPeriod.value.days_marked_done = [...currentDays, dayKey]
     }
   }
 

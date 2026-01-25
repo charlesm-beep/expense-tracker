@@ -86,6 +86,17 @@ const handleTabClick = (tabId: TabType) => {
   transition: transform 0.2s ease;
 }
 
+/* Match border radius on desktop to container corners */
+@media (min-width: 768px) {
+  .nav-tab:first-child::before {
+    border-top-left-radius: 1rem;
+  }
+
+  .nav-tab:last-child::before {
+    border-top-right-radius: 1rem;
+  }
+}
+
 .nav-tab:hover {
   background: #f8fafc;
   color: #334155;

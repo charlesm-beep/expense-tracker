@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
+import { useUIStore } from '@/stores/ui'
 import { useBudget } from '@/composables/useBudget'
 import {
   Dialog,
@@ -18,9 +19,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircleIcon } from 'lucide-vue-next'
 
 const budgetStore = useBudgetStore()
+const uiStore = useUIStore()
 const { updateBudget, getWeekEnd } = useBudget()
 
-const isOpen = defineModel<boolean>()
+const isOpen = computed({
+  get: () => uiStore.newPeriodDialogVisible,
+  set: (value: boolean) => {
+    if (!value) {
+      uiStore.closeNewPeriodDialog()
+    }
+  }
+})
 const newBudgetAmount = ref<number | null>(null)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
@@ -59,7 +68,7 @@ async function handleUpdate() {
 
   try {
     await updateBudget(newBudgetAmount.value)
-    isOpen.value = false
+    uiStore.closeNewPeriodDialog()
     newBudgetAmount.value = null
   } catch (error: any) {
     errorMessage.value = error.message || 'Failed to update budget'
@@ -69,7 +78,7 @@ async function handleUpdate() {
 }
 
 function handleCancel() {
-  isOpen.value = false
+  uiStore.closeNewPeriodDialog()
   newBudgetAmount.value = null
   errorMessage.value = ''
 }

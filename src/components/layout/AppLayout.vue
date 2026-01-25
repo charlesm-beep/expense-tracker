@@ -25,7 +25,7 @@ const uiStore = useUIStore()
     <BottomNav v-if="authStore.user && !authStore.isLoading" />
 
     <!-- Update Budget Dialog -->
-    <UpdateBudgetDialog v-model:open="uiStore.newPeriodDialogVisible" />
+    <UpdateBudgetDialog />
   </div>
 </template>
 
