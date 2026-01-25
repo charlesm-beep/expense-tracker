@@ -18,7 +18,7 @@ const totalAmount = computed(() => formatCurrency(budgetStore.totalSpentCents))
 <template>
   <Card v-if="hasExpenses">
     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-4">
-      <CardTitle>Recent Expenses</CardTitle>
+      <CardTitle>This Week's Expenses</CardTitle>
       <span class="text-sm text-gray-600">
         {{ expenses.length }} {{ expenses.length === 1 ? 'item' : 'items' }}
       </span>

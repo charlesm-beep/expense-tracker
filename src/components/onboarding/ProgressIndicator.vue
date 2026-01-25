@@ -13,7 +13,7 @@ const steps = [
 </script>
 
 <template>
-  <div class="flex items-center justify-center gap-2 mb-8">
+  <div class="flex items-center justify-center gap-2 mb-6">
     <template v-for="(step, index) in steps" :key="step.number">
       <!-- Step Circle -->
       <div
@@ -21,7 +21,7 @@ const steps = [
         :class="currentStep >= step.number ? 'opacity-100' : 'opacity-30'"
       >
         <div
-          class="w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300"
+          class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300"
           :class="
             currentStep >= step.number
               ? 'bg-green-700 text-white'
@@ -31,7 +31,7 @@ const steps = [
           {{ step.number }}
         </div>
         <div
-          class="mt-2 text-xs font-medium transition-all duration-300"
+          class="mt-1.5 text-[10px] font-medium transition-all duration-300"
           :class="
             currentStep >= step.number ? 'text-green-700' : 'text-gray-400'
           "
@@ -43,7 +43,7 @@ const steps = [
       <!-- Progress Line -->
       <div
         v-if="index < steps.length - 1"
-        class="w-12 h-0.5 mb-6 transition-all duration-300"
+        class="w-10 h-0.5 mb-5 transition-all duration-300"
         :class="
           currentStep > step.number ? 'bg-green-700' : 'bg-gray-200'
         "

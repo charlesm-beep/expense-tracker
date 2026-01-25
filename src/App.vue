@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useOnboardingStore } from '@/stores/onboarding'
 import { useUIStore } from '@/stores/ui'
 import { useAuth } from '@/composables/useAuth'
 import { useBudget } from '@/composables/useBudget'
@@ -14,8 +13,11 @@ import LoginScreen from '@/components/auth/LoginScreen.vue'
 // Layout
 import AppLayout from '@/components/layout/AppLayout.vue'
 
-// Onboarding
-import OnboardingFlow from '@/components/onboarding/OnboardingFlow.vue'
+// Budget
+import FirstBudgetDialog from '@/components/budget/FirstBudgetDialog.vue'
+
+// Settings
+import ClearDataDialog from '@/components/settings/ClearDataDialog.vue'
 
 // Views
 import DashboardView from '@/views/DashboardView.vue'
@@ -24,7 +26,6 @@ import HistoryView from '@/views/HistoryView.vue'
 import DebugView from '@/views/DebugView.vue'
 
 const authStore = useAuthStore()
-const onboardingStore = useOnboardingStore()
 const uiStore = useUIStore()
 const { checkAuth } = useAuth()
 const { checkAndRolloverPeriod } = useBudget()
@@ -36,7 +37,6 @@ const debugMode = ref(false)
 const isLoading = computed(() => authStore.isLoading)
 const hasError = computed(() => authStore.syncError !== null)
 const isAuthenticated = computed(() => authStore.user !== null)
-const showOnboarding = computed(() => onboardingStore.showOnboarding)
 const activeTab = computed(() => uiStore.activeTab)
 
 // Current view based on active tab
@@ -83,11 +83,12 @@ onMounted(async () => {
   <!-- Login Screen (Not Authenticated) -->
   <LoginScreen v-else-if="!isAuthenticated" />
 
-  <!-- Onboarding Flow (First Time User) -->
-  <OnboardingFlow v-else-if="showOnboarding" />
-
-  <!-- Main Application (Authenticated + Not Onboarding) -->
+  <!-- Main Application (Authenticated) -->
   <AppLayout v-else>
     <component :is="currentView" />
+    <!-- First Budget Dialog (Shows when no current period) -->
+    <FirstBudgetDialog />
+    <!-- Clear Data Confirmation Dialog -->
+    <ClearDataDialog />
   </AppLayout>
 </template>
