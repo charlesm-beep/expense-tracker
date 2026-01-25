@@ -28,20 +28,20 @@ const isValid = computed(() => {
 
 <template>
   <div class="text-center animate-fadeIn">
-    <div class="text-6xl mb-6">💰</div>
-    <h2 class="text-3xl font-bold text-green-700 mb-3">
+    <div class="text-5xl mb-4">💰</div>
+    <h2 class="text-2xl font-bold text-green-700 mb-2">
       Set Your Weekly Budget
     </h2>
-    <p class="text-lg text-gray-600 mb-10 leading-relaxed">
-      Choose a realistic amount you want to spend each week. You can always adjust this later.
+    <p class="text-base text-gray-600 mb-6 leading-relaxed">
+      Choose a realistic weekly spending limit
     </p>
 
-    <div class="mb-10">
-      <Label for="budget-input" class="text-left block mb-2 text-base font-semibold">
+    <div class="mb-6">
+      <Label for="budget-input" class="text-left block mb-2 text-sm font-semibold">
         Weekly Budget Amount
       </Label>
       <div class="relative">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg font-semibold">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-base font-semibold">
           $
         </span>
         <Input
@@ -51,24 +51,24 @@ const isValid = computed(() => {
           step="0.01"
           min="0"
           placeholder="0.00"
-          class="text-2xl font-bold pl-8 h-14"
+          class="text-xl font-bold pl-7 h-12"
           autofocus
         />
       </div>
-      <p v-if="!isValid" class="text-sm text-red-600 mt-2">
+      <p v-if="!isValid" class="text-xs text-red-600 mt-1.5">
         Please enter a budget amount greater than $0
       </p>
     </div>
 
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-      <div class="flex gap-3">
-        <span class="text-2xl">💡</span>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-left">
+      <div class="flex gap-2">
+        <span class="text-xl">💡</span>
         <div>
-          <div class="font-semibold text-blue-900 mb-1">Budget Tips</div>
-          <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
+          <div class="font-semibold text-blue-900 mb-1 text-sm">Quick Tips</div>
+          <ul class="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
             <li>Start with your typical weekly spending</li>
-            <li>Be realistic - it's better to succeed with a higher budget than fail with an unrealistic one</li>
-            <li>You can adjust your budget at the start of each new week</li>
+            <li>Be realistic - success matters more than perfection</li>
+            <li>You can adjust at the start of each week</li>
           </ul>
         </div>
       </div>

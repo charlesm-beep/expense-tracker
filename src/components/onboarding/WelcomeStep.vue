@@ -25,24 +25,24 @@ const benefits = [
 
 <template>
   <div class="text-center animate-fadeIn">
-    <div class="text-6xl mb-6">👋</div>
-    <h2 class="text-3xl font-bold text-green-700 mb-3">
+    <div class="text-5xl mb-4">👋</div>
+    <h2 class="text-2xl font-bold text-green-700 mb-2">
       Welcome to Weekly Budget!
     </h2>
-    <p class="text-lg text-gray-600 mb-10 leading-relaxed">
-      Your simple, effective tool for managing weekly spending and building better financial habits
+    <p class="text-base text-gray-600 mb-6 leading-relaxed">
+      Simple weekly spending tracking with daily logging and streaks
     </p>
 
-    <div class="flex flex-col gap-6 mb-10 text-left">
+    <div class="flex flex-col gap-4 text-left">
       <div
         v-for="benefit in benefits"
         :key="benefit.title"
-        class="flex gap-4 items-start"
+        class="flex gap-3 items-start"
       >
-        <span class="text-3xl flex-shrink-0">{{ benefit.icon }}</span>
+        <span class="text-2xl flex-shrink-0">{{ benefit.icon }}</span>
         <div>
-          <div class="font-semibold text-gray-900 mb-1">{{ benefit.title }}</div>
-          <div class="text-sm text-gray-600 leading-relaxed">{{ benefit.text }}</div>
+          <div class="font-semibold text-gray-900 text-sm mb-0.5">{{ benefit.title }}</div>
+          <div class="text-xs text-gray-600 leading-relaxed">{{ benefit.text }}</div>
         </div>
       </div>
     </div>

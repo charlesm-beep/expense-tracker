@@ -61,25 +61,25 @@ function handleBack() {
 
 <template>
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-    <div class="max-w-2xl w-full bg-white rounded-3xl p-8 md:p-12 shadow-2xl animate-slideUp">
+    <div class="max-w-lg w-full bg-white rounded-2xl p-6 md:p-8 shadow-2xl animate-slideUp">
       <ProgressIndicator :current-step="onboardingStore.onboardingStep" />
 
-      <div class="min-h-[400px]">
+      <div class="min-h-[320px]">
         <component :is="currentStepComponent" />
       </div>
 
-      <div class="flex gap-3 mt-8">
+      <div class="flex gap-3 mt-6">
         <Button
           v-if="showBackButton"
           variant="outline"
-          size="lg"
+          size="default"
           class="flex-1"
           @click="handleBack"
         >
           Back
         </Button>
         <Button
-          size="lg"
+          size="default"
           :class="showBackButton ? 'flex-1' : 'w-full'"
           :disabled="!canProceed"
           @click="handleNext"
