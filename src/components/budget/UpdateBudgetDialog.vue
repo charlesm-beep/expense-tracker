@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useUIStore } from '@/stores/ui'
 import { useBudget } from '@/composables/useBudget'
@@ -22,6 +22,18 @@ const budgetStore = useBudgetStore()
 const uiStore = useUIStore()
 const { updateBudget, getWeekEnd } = useBudget()
 
+console.log('[UpdateBudgetDialog] Component created', {
+  newPeriodDialogVisible: uiStore.newPeriodDialogVisible,
+  hasInitialLoad: budgetStore.hasInitialLoad
+})
+
+onMounted(() => {
+  console.log('[UpdateBudgetDialog] Component mounted', {
+    newPeriodDialogVisible: uiStore.newPeriodDialogVisible,
+    hasInitialLoad: budgetStore.hasInitialLoad
+  })
+})
+
 const isOpen = computed({
   get: () => uiStore.newPeriodDialogVisible,
   set: (value: boolean) => {
@@ -30,6 +42,14 @@ const isOpen = computed({
     }
   }
 })
+
+// Debug logging
+watch(isOpen, (newVal) => {
+  console.log('[UpdateBudgetDialog] isOpen changed to:', newVal, {
+    newPeriodDialogVisible: uiStore.newPeriodDialogVisible,
+    hasInitialLoad: budgetStore.hasInitialLoad
+  })
+}, { immediate: true })
 const newBudgetAmount = ref<number | null>(null)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
@@ -97,16 +117,20 @@ function handleCancel() {
       <div class="grid gap-4 py-4">
         <div class="grid gap-2">
           <Label for="budget-amount">Weekly Budget Amount (USD)</Label>
-          <Input
-            id="budget-amount"
-            v-model.number="newBudgetAmount"
-            type="number"
-            placeholder="0.00"
-            step="0.01"
-            min="0.01"
-            max="100000"
-            @keyup.enter="handleUpdate"
-          />
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+            <Input
+              id="budget-amount"
+              v-model.number="newBudgetAmount"
+              type="number"
+              placeholder="0.00"
+              step="0.01"
+              min="0.01"
+              max="100000"
+              class="pl-7"
+              @keyup.enter="handleUpdate"
+            />
+          </div>
         </div>
 
         <!-- Pro-rated budget preview -->

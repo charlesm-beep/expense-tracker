@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { DayInfo } from '@/types'
 
-export type TabType = 'dashboard' | 'goals' | 'history'
+export type TabType = 'dashboard' | 'finances' | 'history'
 
 export const useUIStore = defineStore('ui', () => {
   // State
@@ -51,10 +51,13 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function openNewPeriodDialog() {
+    console.log('[UIStore] openNewPeriodDialog called')
+    console.trace() // Show call stack
     newPeriodDialogVisible.value = true
   }
 
   function closeNewPeriodDialog() {
+    console.log('[UIStore] closeNewPeriodDialog called')
     newPeriodDialogVisible.value = false
     newBudgetAmount.value = null
   }

@@ -77,6 +77,7 @@ export function useAuth() {
     budgetStore.setHistory(history)
     budgetStore.setLastBudgetCents(lastBudgetCents)
     budgetStore.setLongestStreak(longestStreak)
+    budgetStore.setHasInitialLoad(true)
   }
 
   async function checkAuth(): Promise<void> {
@@ -165,12 +166,21 @@ export function useAuth() {
 
         // Sync from cloud in background (non-blocking)
         console.log('Starting background sync from cloud...')
-        syncFromCloud().catch((err) => {
-          console.error('Background sync failed:', err)
-        })
+        syncFromCloud()
+          .then(() => {
+            console.log('Initial sync complete, setting initialSyncComplete = true')
+            authStore.setInitialSyncComplete(true)
+          })
+          .catch((err) => {
+            console.error('Background sync failed:', err)
+            // Even if sync fails, mark as complete so UI doesn't stay blocked
+            authStore.setInitialSyncComplete(true)
+          })
       } else {
         console.log('Loading from localStorage...')
         loadLocalData()
+        // No user, no sync needed
+        authStore.setInitialSyncComplete(true)
       }
 
       console.log('checkAuth complete!')

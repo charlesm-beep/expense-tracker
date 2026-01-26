@@ -20,7 +20,7 @@ const isSelected = computed(() => {
 const cellClasses = computed(() =>
   cn(
     'aspect-square rounded-full flex items-center justify-center cursor-pointer transition-all duration-300',
-    'border-4 hover:scale-110',
+    'border-4 hover:scale-110 active:scale-100',
     {
       // Selected state (not complete) - bold emerald ring
       'border-emerald-500 bg-emerald-50 text-gray-900 shadow-lg ring-4 ring-emerald-200 scale-105':

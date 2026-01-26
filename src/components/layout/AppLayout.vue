@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { useBudgetStore } from '@/stores/budget'
 import AppHeader from './AppHeader.vue'
 import BottomNav from './BottomNav.vue'
 import UpdateBudgetDialog from '@/components/budget/UpdateBudgetDialog.vue'
 
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+const budgetStore = useBudgetStore()
 </script>
 
 <template>
@@ -25,7 +27,7 @@ const uiStore = useUIStore()
     <BottomNav v-if="authStore.user && !authStore.isLoading" />
 
     <!-- Update Budget Dialog -->
-    <UpdateBudgetDialog />
+    <UpdateBudgetDialog v-if="budgetStore.hasInitialLoad && authStore.initialSyncComplete" />
   </div>
 </template>
 

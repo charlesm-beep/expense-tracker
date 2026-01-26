@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useUIStore, type TabType } from '@/stores/ui'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard, Target, History } from 'lucide-vue-next'
+import { LayoutDashboard, Wallet, History } from 'lucide-vue-next'
 
 const uiStore = useUIStore()
 
@@ -12,9 +12,9 @@ const tabs = [
     icon: LayoutDashboard,
   },
   {
-    id: 'goals' as TabType,
-    label: 'Goals',
-    icon: Target,
+    id: 'finances' as TabType,
+    label: 'Finances',
+    icon: Wallet,
   },
   {
     id: 'history' as TabType,
@@ -100,6 +100,10 @@ const handleTabClick = (tabId: TabType) => {
 .nav-tab:hover {
   background: #f8fafc;
   color: #334155;
+}
+
+.nav-tab:active {
+  transform: scale(0.95);
 }
 
 .nav-tab.active {

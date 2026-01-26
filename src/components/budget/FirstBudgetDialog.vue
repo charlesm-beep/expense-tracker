@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useBudget } from '@/composables/useBudget'
 import {
@@ -16,7 +16,27 @@ import { Label } from '@/components/ui/label'
 const budgetStore = useBudgetStore()
 const { createNewPeriod } = useBudget()
 
+console.log('[FirstBudgetDialog] Component created', {
+  currentPeriod: budgetStore.currentPeriod,
+  hasInitialLoad: budgetStore.hasInitialLoad
+})
+
+onMounted(() => {
+  console.log('[FirstBudgetDialog] Component mounted', {
+    currentPeriod: budgetStore.currentPeriod,
+    hasInitialLoad: budgetStore.hasInitialLoad
+  })
+})
+
 const isOpen = computed(() => !budgetStore.currentPeriod)
+
+// Debug logging
+watch(isOpen, (newVal) => {
+  console.log('[FirstBudgetDialog] isOpen changed to:', newVal, {
+    currentPeriod: budgetStore.currentPeriod,
+    hasInitialLoad: budgetStore.hasInitialLoad
+  })
+}, { immediate: true })
 const budgetDollars = ref('')
 const isCreating = ref(false)
 

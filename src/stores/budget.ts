@@ -2,12 +2,14 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Period, Expense, HistoricalPeriod } from '@/types'
 
+// Budget store with initial load tracking
 export const useBudgetStore = defineStore('budget', () => {
   // State
   const currentPeriod = ref<Period | null>(null)
   const history = ref<HistoricalPeriod[]>([])
   const lastBudgetCents = ref<number | null>(null)
   const longestStreak = ref(0)
+  const hasInitialLoad = ref(false)
 
   // Getters
   const totalSpentCents = computed(() => {
@@ -25,8 +27,8 @@ export const useBudgetStore = defineStore('budget', () => {
     const remaining = remainingCents.value
     const budget = currentPeriod.value.budget_cents
 
-    if (remaining < 0) return 'danger'
-    if (remaining < budget * 0.2) return 'warning'
+    if (remaining <= 0) return 'danger'
+    if (remaining <= budget * 0.4) return 'warning'
     return ''
   })
 
@@ -158,11 +160,17 @@ export const useBudgetStore = defineStore('budget', () => {
     }
   }
 
+  function setHasInitialLoad(loaded: boolean) {
+    console.log('[BudgetStore] setHasInitialLoad called with:', loaded)
+    hasInitialLoad.value = loaded
+  }
+
   function resetBudgetState() {
     currentPeriod.value = null
     history.value = []
     lastBudgetCents.value = null
     longestStreak.value = 0
+    hasInitialLoad.value = false
   }
 
   return {
@@ -171,6 +179,7 @@ export const useBudgetStore = defineStore('budget', () => {
     history,
     lastBudgetCents,
     longestStreak,
+    hasInitialLoad,
     // Getters
     totalSpentCents,
     remainingCents,
@@ -190,6 +199,7 @@ export const useBudgetStore = defineStore('budget', () => {
     setHistory,
     setLastBudgetCents,
     setLongestStreak,
+    setHasInitialLoad,
     addExpense,
     removeExpense,
     updatePeriodBudget,
