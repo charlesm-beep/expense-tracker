@@ -64,32 +64,8 @@ export function useDailyLogging() {
     }
   }
 
-  function getConsecutiveDays(daysMarkedDone: string[]): number {
-    if (daysMarkedDone.length === 0) return 0
-
-    // Sort days chronologically
-    const sortedDays = [...daysMarkedDone].sort()
-    let consecutive = 1
-
-    // Count backwards from the most recent day
-    for (let i = sortedDays.length - 1; i > 0; i--) {
-      const current = new Date(sortedDays[i])
-      const previous = new Date(sortedDays[i - 1])
-      const diffDays = Math.floor((current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24))
-
-      if (diffDays === 1) {
-        consecutive++
-      } else {
-        break
-      }
-    }
-
-    return consecutive
-  }
-
   return {
     weekDays,
     toggleDayComplete,
-    getConsecutiveDays,
   }
 }

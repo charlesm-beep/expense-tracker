@@ -46,7 +46,8 @@ export function useExpenses() {
     amountDollars: number,
     note: string,
     customTimestamp?: string,
-    category?: string
+    category?: string,
+    isRecurring?: boolean
   ): Promise<void> {
     if (!amountDollars || amountDollars < 0.01 || !note) {
       throw new Error('Invalid expense amount or note')
@@ -75,6 +76,7 @@ export function useExpenses() {
               note: sanitizedNote,
               timestamp: timestamp,
               category: category || null,
+              is_recurring: isRecurring || false,
             })
             .select()
             .single(),

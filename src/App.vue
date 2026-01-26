@@ -19,9 +19,6 @@ import FirstBudgetDialog from '@/components/budget/FirstBudgetDialog.vue'
 // Settings
 import ClearDataDialog from '@/components/settings/ClearDataDialog.vue'
 
-// Daily Logging
-import StreakCelebrationDialog from '@/components/daily-logging/StreakCelebrationDialog.vue'
-
 // Views
 import DashboardView from '@/views/DashboardView.vue'
 import FinancesView from '@/views/FinancesView.vue'
@@ -101,7 +98,5 @@ onMounted(async () => {
     <FirstBudgetDialog v-if="budgetStore.hasInitialLoad && authStore.initialSyncComplete" />
     <!-- Clear Data Confirmation Dialog -->
     <ClearDataDialog />
-    <!-- Streak Celebration Dialog -->
-    <StreakCelebrationDialog />
   </AppLayout>
 </template>

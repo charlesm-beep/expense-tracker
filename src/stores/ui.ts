@@ -16,7 +16,6 @@ export const useUIStore = defineStore('ui', () => {
   const newExpenseNote = ref('')
   const newBudgetAmount = ref<number | null>(null)
   const selectedDay = ref<DayInfo | null>(null)
-  const showStreakCelebration = ref(false)
 
   // Actions
   function setActiveTab(tab: TabType) {
@@ -52,13 +51,10 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function openNewPeriodDialog() {
-    console.log('[UIStore] openNewPeriodDialog called')
-    console.trace() // Show call stack
     newPeriodDialogVisible.value = true
   }
 
   function closeNewPeriodDialog() {
-    console.log('[UIStore] closeNewPeriodDialog called')
     newPeriodDialogVisible.value = false
     newBudgetAmount.value = null
   }
@@ -76,14 +72,6 @@ export const useUIStore = defineStore('ui', () => {
     selectedDay.value = null
   }
 
-  function openStreakCelebration() {
-    showStreakCelebration.value = true
-  }
-
-  function closeStreakCelebration() {
-    showStreakCelebration.value = false
-  }
-
   function resetUIState() {
     activeTab.value = 'dashboard'
     userMenuOpen.value = false
@@ -95,7 +83,6 @@ export const useUIStore = defineStore('ui', () => {
     newExpenseNote.value = ''
     newBudgetAmount.value = null
     selectedDay.value = null
-    showStreakCelebration.value = false
   }
 
   return {
@@ -110,7 +97,6 @@ export const useUIStore = defineStore('ui', () => {
     newExpenseNote,
     newBudgetAmount,
     selectedDay,
-    showStreakCelebration,
     // Actions
     setActiveTab,
     toggleUserMenu,
@@ -125,8 +111,6 @@ export const useUIStore = defineStore('ui', () => {
     resetExpenseForm,
     selectDay,
     clearSelectedDay,
-    openStreakCelebration,
-    closeStreakCelebration,
     resetUIState,
   }
 })
