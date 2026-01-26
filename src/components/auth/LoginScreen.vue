@@ -324,6 +324,10 @@ const handleSignIn = async () => {
 
 /* Mobile Responsive */
 @media (max-width: 640px) {
+  .login-screen {
+    padding: 1.5rem 1rem;
+  }
+
   .hero-title {
     font-size: 2rem;
   }
@@ -338,15 +342,18 @@ const handleSignIn = async () => {
 
   .login-content {
     gap: 2rem;
+    padding-bottom: 4rem;
   }
 
   .footer-credits {
-    bottom: 1rem;
-    right: 1rem;
+    position: fixed;
+    bottom: 0.75rem;
+    right: 0.75rem;
     font-size: 0.75rem;
     flex-direction: column;
     align-items: flex-end;
     gap: 0.25rem;
+    line-height: 1.4;
   }
 
   .credit-divider {
