@@ -86,7 +86,16 @@ const handleUpdateBudget = () => {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-avatar-trigger:hover {
+  transform: translateY(-2px);
+}
+
+.user-avatar-trigger:active {
+  transform: translateY(0) scale(0.95);
 }
 
 .user-avatar {
@@ -100,15 +109,18 @@ const handleUpdateBudget = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.user-avatar:hover {
-  transform: translateY(-2px);
+.user-avatar-trigger:hover .user-avatar {
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
   border-color: rgba(255, 255, 255, 0.95);
+}
+
+.user-avatar-trigger:active .user-avatar {
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.3);
 }
 
 .user-menu-content {

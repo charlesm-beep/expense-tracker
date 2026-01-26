@@ -42,7 +42,13 @@ export function useExpenses() {
       .trim()
   }
 
-  async function addExpense(amountDollars: number, note: string, customTimestamp?: string): Promise<void> {
+  async function addExpense(
+    amountDollars: number,
+    note: string,
+    customTimestamp?: string,
+    category?: string,
+    isRecurring?: boolean
+  ): Promise<void> {
     if (!amountDollars || amountDollars < 0.01 || !note) {
       throw new Error('Invalid expense amount or note')
     }
@@ -69,6 +75,8 @@ export function useExpenses() {
               amount_cents: amountCents,
               note: sanitizedNote,
               timestamp: timestamp,
+              category: category || null,
+              is_recurring: isRecurring || false,
             })
             .select()
             .single(),
@@ -86,6 +94,7 @@ export function useExpenses() {
           timestamp: newExpense.timestamp,
           amount_cents: newExpense.amount_cents,
           note: newExpense.note || '',
+          category: newExpense.category || undefined,
         }
 
         budgetStore.addExpense(expense)
@@ -98,6 +107,7 @@ export function useExpenses() {
           timestamp: timestamp,
           amount_cents: amountCents,
           note: sanitizedNote,
+          category: category || undefined,
         }
 
         budgetStore.addExpense(expense)

@@ -12,6 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
   const pendingChanges = ref(false)
   const showSlowLoadingMessage = ref(false)
   const syncRetryAttempted = ref(false)
+  const initialSyncComplete = ref(false)
 
   // Actions
   function setUser(newUser: User | null) {
@@ -46,6 +47,11 @@ export const useAuthStore = defineStore('auth', () => {
     syncRetryAttempted.value = attempted
   }
 
+  function setInitialSyncComplete(complete: boolean) {
+    console.log('[AuthStore] setInitialSyncComplete called with:', complete)
+    initialSyncComplete.value = complete
+  }
+
   function resetAuthState() {
     user.value = null
     isLoading.value = true
@@ -55,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
     pendingChanges.value = false
     showSlowLoadingMessage.value = false
     syncRetryAttempted.value = false
+    initialSyncComplete.value = false
   }
 
   return {
@@ -67,6 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     pendingChanges,
     showSlowLoadingMessage,
     syncRetryAttempted,
+    initialSyncComplete,
     // Actions
     setUser,
     setLoading,
@@ -76,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
     setPendingChanges,
     setShowSlowLoadingMessage,
     setSyncRetryAttempted,
+    setInitialSyncComplete,
     resetAuthState,
   }
 })

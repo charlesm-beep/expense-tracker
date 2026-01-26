@@ -104,6 +104,7 @@ export function useSync() {
             timestamp: e.timestamp,
             amount_cents: e.amount_cents,
             note: e.note || '',
+            category: e.category || undefined,
           })),
         }
         budgetStore.setCurrentPeriod(currentPeriod)
@@ -126,6 +127,7 @@ export function useSync() {
           timestamp: e.timestamp,
           amount_cents: e.amount_cents,
           note: e.note || '',
+          category: e.category || undefined,
         })),
       }))
 

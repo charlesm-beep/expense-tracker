@@ -21,6 +21,7 @@ import ClearDataDialog from '@/components/settings/ClearDataDialog.vue'
 
 // Views
 import DashboardView from '@/views/DashboardView.vue'
+import FinancesView from '@/views/FinancesView.vue'
 import GoalsView from '@/views/GoalsView.vue'
 import HistoryView from '@/views/HistoryView.vue'
 import DebugView from '@/views/DebugView.vue'
@@ -29,6 +30,10 @@ const authStore = useAuthStore()
 const uiStore = useUIStore()
 const { checkAuth } = useAuth()
 const { checkAndRolloverPeriod } = useBudget()
+
+// Import budget store to check hasInitialLoad
+import { useBudgetStore } from '@/stores/budget'
+const budgetStore = useBudgetStore()
 
 // Check if debug mode is enabled via URL parameter
 const debugMode = ref(false)
@@ -42,6 +47,8 @@ const activeTab = computed(() => uiStore.activeTab)
 // Current view based on active tab
 const currentView = computed(() => {
   switch (activeTab.value) {
+    case 'finances':
+      return FinancesView
     case 'goals':
       return GoalsView
     case 'history':
@@ -87,7 +94,8 @@ onMounted(async () => {
   <AppLayout v-else>
     <component :is="currentView" />
     <!-- First Budget Dialog (Shows when no current period) -->
-    <FirstBudgetDialog />
+    <!-- Debug: hasInitialLoad = {{ budgetStore.hasInitialLoad }}, initialSyncComplete = {{ authStore.initialSyncComplete }} -->
+    <FirstBudgetDialog v-if="budgetStore.hasInitialLoad && authStore.initialSyncComplete" />
     <!-- Clear Data Confirmation Dialog -->
     <ClearDataDialog />
   </AppLayout>

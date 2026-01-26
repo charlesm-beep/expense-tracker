@@ -23,11 +23,21 @@ const spendingPercentage = computed(() => {
   return Math.min(100, Math.max(0, percentage))
 })
 
-const remainingColorClass = computed(() => {
-  const colorClass = budgetStore.remainingColorClass
-  if (colorClass === 'danger') return 'text-red-600'
-  if (colorClass === 'warning') return 'text-amber-600'
-  return 'text-green-600'
+const remainingPercentage = computed(() => {
+  if (!budgetStore.currentPeriod) return 100
+  const percentage = (budgetStore.remainingCents / budgetStore.currentPeriod.budget_cents) * 100
+  return Math.min(100, Math.max(0, percentage))
+})
+
+const progressBarColor = computed(() => {
+  const percentage = remainingPercentage.value
+
+  // Color shifts from bright green (full) to darker green (empty)
+  // Using HSL: adjust lightness based on remaining percentage
+  // 100% = hsl(142, 76%, 45%) bright green
+  // 0% = hsl(142, 76%, 25%) dark green
+  const lightness = 25 + (percentage * 0.2) // 25% to 45%
+  return `hsl(142, 76%, ${lightness}%)`
 })
 
 const badgeVariant = computed(() => {
@@ -40,15 +50,8 @@ const badgeVariant = computed(() => {
 const badgeText = computed(() => {
   const colorClass = budgetStore.remainingColorClass
   if (colorClass === 'danger') return 'Over Budget'
-  if (colorClass === 'warning') return 'Low Budget'
+  if (colorClass === 'warning') return 'Caution'
   return 'On Track'
-})
-
-const progressColorClass = computed(() => {
-  const colorClass = budgetStore.remainingColorClass
-  if (colorClass === 'danger') return 'bg-red-600'
-  if (colorClass === 'warning') return 'bg-amber-600'
-  return 'bg-green-600'
 })
 </script>
 
@@ -62,7 +65,7 @@ const progressColorClass = computed(() => {
         </div>
         <div
           class="text-5xl font-bold transition-colors duration-300"
-          :class="remainingColorClass"
+          :style="{ color: progressBarColor }"
         >
           {{ remainingAmount }}
         </div>
@@ -74,43 +77,19 @@ const progressColorClass = computed(() => {
       </div>
 
       <!-- Progress Bar -->
-      <div class="mb-6">
+      <div class="mb-3">
         <Progress
-          :model-value="spendingPercentage"
-          :class="progressColorClass"
+          :model-value="remainingPercentage"
+          :style="{ '--progress-color': progressBarColor }"
           class="h-3"
         />
       </div>
 
-      <!-- Budget Breakdown -->
-      <div class="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-        <div class="flex flex-col text-center">
-          <span class="text-xs text-gray-600 mb-1 uppercase tracking-wide font-semibold">
-            Spent
-          </span>
-          <span class="text-base font-semibold text-gray-900">
-            {{ spentAmount }}
-          </span>
-        </div>
-        <div class="flex flex-col text-center">
-          <span class="text-xs text-gray-600 mb-1 uppercase tracking-wide font-semibold">
-            Budget
-          </span>
-          <span class="text-base font-semibold text-gray-900">
-            {{ budgetAmount }}
-          </span>
-        </div>
-        <div class="flex flex-col text-center">
-          <span class="text-xs text-gray-600 mb-1 uppercase tracking-wide font-semibold">
-            Remaining
-          </span>
-          <span
-            class="text-base font-semibold"
-            :class="remainingColorClass"
-          >
-            {{ remainingAmount }}
-          </span>
-        </div>
+      <!-- Starting Budget Context -->
+      <div class="text-center">
+        <span class="text-sm text-gray-500">
+          Started with {{ budgetAmount }}
+        </span>
       </div>
     </CardContent>
   </Card>

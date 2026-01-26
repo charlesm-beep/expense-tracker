@@ -36,19 +36,10 @@ async function handleClick() {
     return
   }
 
-  const wasComplete = activeDay.value.isComplete
-
   // Toggle the value
   isChecked.value = !isChecked.value
 
   await toggleDayComplete(activeDay.value.dayKey)
-
-  // Show celebration modal when marking as complete
-  if (!wasComplete) {
-    setTimeout(() => {
-      uiStore.openStreakCelebration()
-    }, 200)
-  }
 }
 </script>
 

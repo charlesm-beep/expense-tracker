@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useExpenses } from '@/composables/useExpenses'
 import { useUIStore } from '@/stores/ui'
 import { useBudgetStore } from '@/stores/budget'
@@ -8,22 +8,12 @@ import { useFormatters } from '@/composables/useFormatters'
 import { useDailyLogging } from '@/composables/useDailyLogging'
 import { useLocalStorage } from '@/composables/useLocalStorage'
 import { supabase } from '@/lib/supabase'
-import { EXPENSE_CATEGORIES } from '@/lib/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircleIcon } from 'lucide-vue-next'
+import { AlertCircleIcon, CheckCircle2 } from 'lucide-vue-next'
 
 const { addExpense } = useExpenses()
 const uiStore = useUIStore()
@@ -34,9 +24,72 @@ const { weekDays } = useDailyLogging()
 const localStorage = useLocalStorage()
 
 const amount = ref<number | null>(null)
-const category = ref('')
+const description = ref('')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
+const successMessage = ref(false)
+
+// Personal merchant list stored in localStorage
+interface MerchantEntry {
+  description: string
+  category: string
+  count: number
+}
+
+const merchantList = ref<MerchantEntry[]>([])
+const showSuggestions = ref(false)
+const filteredSuggestions = computed(() => {
+  if (!description.value) return []
+  const lower = description.value.toLowerCase()
+  return merchantList.value
+    .filter(m => m.description.toLowerCase().includes(lower))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+})
+
+// Load merchant list from localStorage on mount
+onMounted(() => {
+  const stored = window.localStorage.getItem('merchant_list')
+  if (stored) {
+    merchantList.value = JSON.parse(stored)
+  }
+})
+
+// Auto-categorize based on keywords
+function autoCategorize(desc: string): string {
+  const lower = desc.toLowerCase()
+
+  if (lower.match(/\b(grocery|groceries|supermarket|whole foods|trader joe|safeway|kroger|walmart|target|costco|produce|vegetables|fruit)\b/)) return 'Groceries'
+  if (lower.match(/\b(restaurant|dining|dinner|lunch|breakfast|food|pizza|burger|sushi|taco|cafe|bar|pub)\b/)) return 'Dining Out'
+  if (lower.match(/\b(gas|fuel|uber|lyft|taxi|parking|car|vehicle|auto|transit|bus|train|subway|metro)\b/)) return 'Transportation'
+  if (lower.match(/\b(movie|cinema|concert|show|entertainment|theater|game|sports|ticket|event)\b/)) return 'Entertainment'
+  if (lower.match(/\b(shop|shopping|store|clothes|clothing|amazon|purchase|buy|retail)\b/)) return 'Shopping'
+  if (lower.match(/\b(doctor|hospital|pharmacy|medicine|medical|health|dentist|clinic)\b/)) return 'Healthcare'
+  if (lower.match(/\b(haircut|salon|barber|spa|gym|fitness|personal)\b/)) return 'Personal Care'
+  if (lower.match(/\b(coffee|starbucks|cafe|latte|espresso|drink|bar|beer|wine|alcohol)\b/)) return 'Coffee/Drinks'
+  if (lower.match(/\b(subscription|netflix|spotify|hulu|service|membership|bill|utility)\b/)) return 'Subscriptions'
+
+  return 'Other'
+}
+
+// Add or update merchant in list
+function updateMerchantList(desc: string) {
+  const existing = merchantList.value.find(m => m.description.toLowerCase() === desc.toLowerCase())
+
+  if (existing) {
+    existing.count++
+  } else {
+    const category = autoCategorize(desc)
+    merchantList.value.push({
+      description: desc,
+      category,
+      count: 1
+    })
+  }
+
+  // Save to localStorage
+  window.localStorage.setItem('merchant_list', JSON.stringify(merchantList.value))
+}
 
 const hasSelectedDay = computed(() => !!uiStore.selectedDay)
 
@@ -113,8 +166,8 @@ async function handleAddExpense() {
     return
   }
 
-  if (!category.value) {
-    errorMessage.value = 'Please select a category'
+  if (!description.value || description.value.trim() === '') {
+    errorMessage.value = 'Please enter a description'
     return
   }
 
@@ -122,6 +175,9 @@ async function handleAddExpense() {
   errorMessage.value = ''
 
   try {
+    // Update merchant list with this description
+    updateMerchantList(description.value.trim())
+
     // If a day is selected, use that day's date (at noon to avoid timezone issues)
     let timestamp: string | undefined = undefined
     if (uiStore.selectedDay) {
@@ -130,15 +186,32 @@ async function handleAddExpense() {
       timestamp = selectedDate.toISOString()
     }
 
-    await addExpense(amount.value, category.value, timestamp)
+    // Auto-categorize the expense
+    const category = autoCategorize(description.value.trim())
+
+    // Store description in note field and category
+    await addExpense(amount.value, description.value.trim(), timestamp, category)
+
+    // Show success feedback
+    successMessage.value = true
+    setTimeout(() => {
+      successMessage.value = false
+    }, 2000)
+
     // Reset form
     amount.value = null
-    category.value = ''
+    description.value = ''
+    showSuggestions.value = false
   } catch (error: any) {
     errorMessage.value = error.message || 'Failed to add expense'
   } finally {
     isSubmitting.value = false
   }
+}
+
+function selectSuggestion(merchant: MerchantEntry) {
+  description.value = merchant.description
+  showSuggestions.value = false
 }
 </script>
 
@@ -173,7 +246,7 @@ async function handleAddExpense() {
         <button
           @click="handleToggleChange"
           :class="[
-            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2',
+            'relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-95',
             isTargetDayComplete ? 'bg-green-600' : 'bg-gray-300'
           ]"
           type="button"
@@ -182,49 +255,85 @@ async function handleAddExpense() {
         >
           <span
             :class="[
-              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-              isTargetDayComplete ? 'translate-x-6' : 'translate-x-1'
+              'inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-200 shadow-sm',
+              isTargetDayComplete ? 'translate-x-6 scale-110' : 'translate-x-1'
             ]"
           />
         </button>
       </div>
     </CardHeader>
     <CardContent>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+      <div class="space-y-4 mb-4">
         <div class="space-y-2">
           <Label for="expense-amount">Amount *</Label>
-          <Input
-            id="expense-amount"
-            v-model.number="amount"
-            type="number"
-            placeholder="0.00"
-            step="0.01"
-            min="0.01"
-            max="10000"
-            @keyup.enter="handleAddExpense"
-          />
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+            <Input
+              id="expense-amount"
+              v-model.number="amount"
+              type="number"
+              placeholder="0.00"
+              step="0.01"
+              min="0.01"
+              max="10000"
+              class="pl-7"
+              @keyup.enter="handleAddExpense"
+            />
+          </div>
         </div>
 
-        <div class="space-y-2">
-          <Label for="expense-category">Category *</Label>
-          <Select v-model="category">
-            <SelectTrigger id="expense-category">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem
-                  v-for="cat in EXPENSE_CATEGORIES"
-                  :key="cat.value"
-                  :value="cat.value"
-                >
-                  {{ cat.label }}
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+        <div class="space-y-2 relative">
+          <Label for="expense-description">Description *</Label>
+          <Input
+            id="expense-description"
+            v-model="description"
+            type="text"
+            placeholder="e.g., Coffee at Neon Cowboy, Whole Foods, Gas"
+            @keyup.enter="handleAddExpense"
+            @focus="showSuggestions = true"
+            @blur="setTimeout(() => showSuggestions = false, 200)"
+          />
+
+          <!-- Autocomplete Suggestions -->
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 -translate-y-1"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 -translate-y-1"
+          >
+            <div
+              v-if="showSuggestions && filteredSuggestions.length > 0"
+              class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+            >
+              <button
+                v-for="merchant in filteredSuggestions"
+                :key="merchant.description"
+                @click="selectSuggestion(merchant)"
+                class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between transition-colors"
+              >
+                <span class="font-medium text-gray-900">{{ merchant.description }}</span>
+                <span class="text-xs text-gray-500">{{ merchant.category }}</span>
+              </button>
+            </div>
+          </Transition>
         </div>
       </div>
+
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition ease-in duration-150"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <Alert v-if="successMessage" class="mb-4 border-green-600 bg-green-50 text-green-900">
+          <CheckCircle2 class="h-4 w-4 text-green-600" />
+          <AlertDescription class="text-green-900">Expense added successfully!</AlertDescription>
+        </Alert>
+      </Transition>
 
       <Alert v-if="errorMessage" variant="destructive" class="mb-4">
         <AlertCircleIcon class="h-4 w-4" />
@@ -233,7 +342,7 @@ async function handleAddExpense() {
 
       <Button
         @click="handleAddExpense"
-        :disabled="!amount || amount <= 0 || !category || isSubmitting"
+        :disabled="!amount || amount <= 0 || !description || isSubmitting"
         class="w-full"
       >
         {{ isSubmitting ? 'Adding...' : 'Add Expense' }}
