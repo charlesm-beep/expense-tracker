@@ -19,9 +19,13 @@ import FirstBudgetDialog from '@/components/budget/FirstBudgetDialog.vue'
 // Settings
 import ClearDataDialog from '@/components/settings/ClearDataDialog.vue'
 
+// Daily Logging
+import StreakCelebrationDialog from '@/components/daily-logging/StreakCelebrationDialog.vue'
+
 // Views
 import DashboardView from '@/views/DashboardView.vue'
 import FinancesView from '@/views/FinancesView.vue'
+import GoalsView from '@/views/GoalsView.vue'
 import HistoryView from '@/views/HistoryView.vue'
 import DebugView from '@/views/DebugView.vue'
 
@@ -48,6 +52,8 @@ const currentView = computed(() => {
   switch (activeTab.value) {
     case 'finances':
       return FinancesView
+    case 'goals':
+      return GoalsView
     case 'history':
       return HistoryView
     case 'dashboard':
@@ -95,5 +101,7 @@ onMounted(async () => {
     <FirstBudgetDialog v-if="budgetStore.hasInitialLoad && authStore.initialSyncComplete" />
     <!-- Clear Data Confirmation Dialog -->
     <ClearDataDialog />
+    <!-- Streak Celebration Dialog -->
+    <StreakCelebrationDialog />
   </AppLayout>
 </template>

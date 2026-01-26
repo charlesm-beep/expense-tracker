@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { DayInfo } from '@/types'
 
-export type TabType = 'dashboard' | 'finances' | 'history'
+export type TabType = 'dashboard' | 'finances' | 'goals' | 'history'
 
 export const useUIStore = defineStore('ui', () => {
   // State

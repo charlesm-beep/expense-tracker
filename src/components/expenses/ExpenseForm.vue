@@ -20,7 +20,7 @@ const uiStore = useUIStore()
 const budgetStore = useBudgetStore()
 const authStore = useAuthStore()
 const { formatDate } = useFormatters()
-const { weekDays } = useDailyLogging()
+const { weekDays, getConsecutiveDays } = useDailyLogging()
 const localStorage = useLocalStorage()
 
 const amount = ref<number | null>(null)
@@ -134,6 +134,7 @@ async function handleToggleChange() {
   if (!budgetStore.currentPeriod) return
 
   const dayKey = targetDayKey.value
+  const wasComplete = budgetStore.currentPeriod.days_marked_done.includes(dayKey)
 
   // Toggle immediately in store
   budgetStore.toggleDayMarkedDone(dayKey)
@@ -156,6 +157,24 @@ async function handleToggleChange() {
     } catch (error) {
       console.error('Failed to sync day completion:', error)
       authStore.setPendingChanges(true)
+    }
+  }
+
+  // Show celebration modal when marking as complete (and it wasn't complete before)
+  if (!wasComplete && isTargetDayComplete.value) {
+    const consecutiveDays = getConsecutiveDays(budgetStore.currentPeriod.days_marked_done)
+    const today = new Date().toISOString().split('T')[0]
+    const lastShown = window.localStorage.getItem('lastStreakCelebration')
+
+    console.log('[ExpenseForm] Consecutive days:', consecutiveDays, 'Last shown:', lastShown, 'Today:', today)
+
+    // Show celebration if 2+ consecutive days and hasn't been shown today
+    if (consecutiveDays >= 2 && lastShown !== today) {
+      setTimeout(() => {
+        console.log('[ExpenseForm] Opening streak celebration')
+        uiStore.openStreakCelebration()
+        window.localStorage.setItem('lastStreakCelebration', today)
+      }, 300)
     }
   }
 }
