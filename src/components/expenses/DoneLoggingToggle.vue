@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 
 const budgetStore = useBudgetStore()
 const uiStore = useUIStore()
-const { weekDays, toggleDayComplete } = useDailyLogging()
+const { weekDays, toggleDayComplete, getConsecutiveDays } = useDailyLogging()
 
 // Use selected day if available, otherwise use today
 const activeDay = computed(() => {
@@ -32,7 +32,7 @@ watch(
 const labelText = computed(() => 'Done logging')
 
 async function handleClick() {
-  if (!activeDay.value) {
+  if (!activeDay.value || !budgetStore.currentPeriod) {
     return
   }
 
@@ -44,10 +44,21 @@ async function handleClick() {
   await toggleDayComplete(activeDay.value.dayKey)
 
   // Show celebration modal when marking as complete
-  if (!wasComplete) {
-    setTimeout(() => {
-      uiStore.openStreakCelebration()
-    }, 200)
+  if (!wasComplete && isChecked.value) {
+    const consecutiveDays = getConsecutiveDays(budgetStore.currentPeriod.days_marked_done)
+    const today = new Date().toISOString().split('T')[0]
+    const lastShown = window.localStorage.getItem('lastStreakCelebration')
+
+    console.log('[DoneLoggingToggle] Consecutive days:', consecutiveDays, 'Last shown:', lastShown, 'Today:', today)
+
+    // Show celebration if 2+ consecutive days and hasn't been shown today
+    if (consecutiveDays >= 2 && lastShown !== today) {
+      setTimeout(() => {
+        console.log('[DoneLoggingToggle] Opening streak celebration')
+        uiStore.openStreakCelebration()
+        window.localStorage.setItem('lastStreakCelebration', today)
+      }, 200)
+    }
   }
 }
 </script>

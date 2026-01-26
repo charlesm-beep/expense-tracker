@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 
 const budgetStore = useBudgetStore()
 const uiStore = useUIStore()
-const { weekDays } = useDailyLogging()
+const { weekDays, getConsecutiveDays } = useDailyLogging()
 
 const isOpen = computed({
   get: () => uiStore.showStreakCelebration,
@@ -22,7 +22,10 @@ const isOpen = computed({
   }
 })
 
-const streakCount = computed(() => budgetStore.currentStreak)
+const streakCount = computed(() => {
+  if (!budgetStore.currentPeriod) return 0
+  return getConsecutiveDays(budgetStore.currentPeriod.days_marked_done)
+})
 
 const handleDismiss = () => {
   uiStore.closeStreakCelebration()

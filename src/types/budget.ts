@@ -5,6 +5,7 @@ export interface Expense {
   amount_cents: number
   note: string
   timestamp: string
+  category?: string // NEW: Optional for backward compatibility
 }
 
 export interface Period {

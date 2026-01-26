@@ -186,8 +186,11 @@ async function handleAddExpense() {
       timestamp = selectedDate.toISOString()
     }
 
-    // Store description in note field
-    await addExpense(amount.value, description.value.trim(), timestamp)
+    // Auto-categorize the expense
+    const category = autoCategorize(description.value.trim())
+
+    // Store description in note field and category
+    await addExpense(amount.value, description.value.trim(), timestamp, category)
 
     // Show success feedback
     successMessage.value = true

@@ -46,8 +46,11 @@ function autoCategorize(desc: string): string {
   return 'Other'
 }
 
-const autoCategory = computed(() => autoCategorize(props.expense.note || ''))
-const categoryEmoji = computed(() => CATEGORY_MAP[autoCategory.value] || '📦')
+// Use stored category if available, otherwise auto-categorize
+const displayCategory = computed(() => {
+  return props.expense.category || autoCategorize(props.expense.note || '')
+})
+const categoryEmoji = computed(() => CATEGORY_MAP[displayCategory.value] || '📦')
 
 async function handleDeleteClick() {
   await deleteExpense(props.expense.id)
@@ -63,7 +66,7 @@ async function handleDeleteClick() {
       <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
         <span>{{ formatRelativeDate(expense.timestamp) }}</span>
         <span>•</span>
-        <span class="text-gray-400">{{ autoCategory }}</span>
+        <span class="text-gray-400">{{ displayCategory }}</span>
       </div>
     </div>
     <div class="flex items-center gap-2 ml-4">
